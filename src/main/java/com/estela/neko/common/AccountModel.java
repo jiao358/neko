@@ -1,5 +1,7 @@
 package com.estela.neko.common;
 
+import com.estela.neko.huobi.api.ApiClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -12,6 +14,8 @@ public class AccountModel {
 
     public  String apiSecret;
 
+    @Autowired
+    ApiClient apiClient;
 
     public boolean hasAccountKey(){
         return (!StringUtils.isEmpty(apiKey)) && (!StringUtils.isEmpty(apiSecret));
@@ -30,6 +34,8 @@ public class AccountModel {
 
 
     public void setKey(String api,String sec){
+        apiClient.setAccessKeyId(api);
+        apiClient.setAccessKeySecret(sec);
         apiKey=api;
         apiSecret=sec;
 

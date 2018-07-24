@@ -71,8 +71,19 @@ public class TradeSerivce {
     }
 
 
+    @RequestMapping("/start")
+    public StrategyStatus go(String startOrder){
+        if(!StringUtils.isEmpty(startOrder)){
+            tradeStatus.setStartOrder(new BigDecimal(startOrder));
+        }
+        accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a","5774a589-a4b36db6-382fdc6f-6bbae");
+
+        tradeStatus.setTrading(true);
+        priceStrategy.startReflashPrice();
 
 
+        return tradeStatus;
+    }
 
     @RequestMapping("/start")
     public StrategyStatus start(@RequestParam(required = true) String accessKey, @RequestParam(required = true)String securityKey, BigDecimal startOrderPrice){
