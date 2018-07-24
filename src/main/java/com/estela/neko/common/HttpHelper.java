@@ -39,10 +39,10 @@ public class HttpHelper {
         try {
 
 
-           /* String sendGet = sendGet("https://api.huobipro.com/market/trade",
-                "symbol=htusdt&AccessKeyId=" + apiKey);   */
-            String sendGet = get("https://api.huobipro.com/market/trade",
+           String sendGet = sendGet("https://api.huobipro.com/market/trade",
                 "symbol=htusdt&AccessKeyId=" + apiKey);
+          /*  String sendGet = get("https://api.huobipro.com/market/trade",
+                "symbol=htusdt&AccessKeyId=" + apiKey);*/
 
             JSONObject parseObject = JSON.parseObject(sendGet);
             proPrice = parseObject.getJSONObject("tick").getJSONArray("data").getJSONObject(0)
