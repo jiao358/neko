@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <property name="APP_NAME" value="boom"/>
+    <property name="LOG_PATH" value="${user.home}/neko/logs"/>
+    <property name="LOG_FILE" value="${LOG_PATH}/neko.log"/>
+
+    <appender name="PROJECT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level :: %logger :: %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="com.alibaba" additivity="false">
+        <appender-ref ref="PROJECT"/>
+    </logger>
+
+    <root level="ERROR">
+        <appender-ref ref="PROJECT"/>
+    </root>
+
+</configuration>
+
+
+
