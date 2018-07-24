@@ -71,7 +71,7 @@ public class TradeSerivce {
     }
 
 
-    @RequestMapping("/start")
+    @RequestMapping("/go")
     public StrategyStatus go(String startOrder){
         if(!StringUtils.isEmpty(startOrder)){
             tradeStatus.setStartOrder(new BigDecimal(startOrder));
