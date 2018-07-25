@@ -11,10 +11,12 @@ import com.estela.neko.huobi.response.OrdersDetailResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -73,7 +75,7 @@ public class PriceStrategy {
 
             BigDecimal currentPrice = priceMemery.getCurrentPrice();
             autoMartket(currentPrice);
-        }, 100, 250, TimeUnit.MILLISECONDS);
+        }, 4000, 250, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -95,8 +97,10 @@ public class PriceStrategy {
         if (strategyStatus.getStartOrder() != null &&  strategyStatus.isSatisfyTrading(currentPrice.intValue(),strategyStatus.getStartOrder().intValue())) {
             logger.info("执行第一次StartOrder: 当前价格:"+currentPrice.intValue());
             //指定开始执行交易价格,如果没有这个交易价格则等待
-            buyOrder(strategyStatus.getStartOrder());
+            BigDecimal price = strategyStatus.getStartOrder();
             strategyStatus.setStartOrder(null);
+            buyOrder(price);
+
         } else {
             //直接将当前价格作为基准价格
             if (priceMemery.noAnyTradeOrder()) {
@@ -186,9 +190,9 @@ public class PriceStrategy {
 
 
         buyAccessPool.execute(()->{
-              final int prePrice= price.intValue();
+              final int buyPrice= price.intValue();
               boolean tradeOver = false;
-              int newPrice = prePrice  + strategyStatus.getFluctuation();
+              int sellPrice = buyPrice  + strategyStatus.getFluctuation();
 
 
               while(!tradeOver){
@@ -201,7 +205,7 @@ public class PriceStrategy {
 
                           String amount = (String) ((Map) (ordersDetail.getData()))
                               .get("field-amount");
-                          logger.info("准备挂空单，" + newPrice + "点, 数量: " + amount);
+                          logger.info("准备挂空单，售出价格:" + sellPrice + " ,数量: " + amount);
                           double parseDouble = Double.parseDouble(amount);
                           if (parseDouble < 0.1) {
                               amount = "0.1";
@@ -210,12 +214,13 @@ public class PriceStrategy {
                               amount = bg.toString();
                           }
 
-                          sell(newPrice, amount);
+                          sell(sellPrice, amount);
+                          priceMemery.cleanPrice(buyPrice);
                           tradeOver = true;
                       }
                       Thread.sleep(500);
                   } catch (Exception e) {
-                      logger.error("轮训验证多单信息异常: 订单号:"+orderId+",价格:"+prePrice,e);
+                      logger.error("轮训验证多单信息异常: 订单号:"+orderId+",买入价格:"+buyPrice,e);
                   }
               }
 
