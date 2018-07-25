@@ -20,6 +20,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  **/
 @Service
 public class PriceMemery {
+
+    public static int priceNow;
+
+
+
     @Transient
     @Autowired
     StrategyStatus strategyStatus;

@@ -39,6 +39,8 @@ public class TradeSerivce {
     @Autowired
     ApiClient apiClient;
 
+
+
     @RequestMapping("/price")
     public Object getPrice() throws Exception {
 
@@ -149,8 +151,8 @@ public class TradeSerivce {
         accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a","5774a589-a4b36db6-382fdc6f-6bbae");
 
         tradeStatus.setTrading(true);
-        priceStrategy.startReflashPrice();
-
+        //priceStrategy.startReflashPrice();
+        priceStrategy.startTradePrice();
 
         return tradeStatus;
     }
@@ -169,7 +171,7 @@ public class TradeSerivce {
         tradeStatus.setStartOrder(startOrderPrice);
         accountModel.setKey(accessKey,securityKey);
         tradeStatus.setTrading(true);
-        priceStrategy.startReflashPrice();
+        //priceStrategy.startReflashPrice();
 
 
 
