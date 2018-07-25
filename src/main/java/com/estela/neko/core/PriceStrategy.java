@@ -75,7 +75,7 @@ public class PriceStrategy {
 
             BigDecimal currentPrice = priceMemery.getCurrentPrice();
             autoMartket(currentPrice);
-        }, 100, 100, TimeUnit.MILLISECONDS);
+        }, 100, 250, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -233,7 +233,7 @@ public class PriceStrategy {
         long accountId = account.getId();
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
-        createOrderReq.amount = amount;
+        createOrderReq.amount = String.valueOf(strategyStatus.getLotSize());
         createOrderReq.price = truePrice;
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;

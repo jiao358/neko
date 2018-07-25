@@ -24,11 +24,11 @@ public class StrategyStatus {
     /**
      * 最多持有订单数
      */
-    private int maxOrderSize = 50;
+    private int maxOrderSize = 20;
     /**
      * 交易手数
      */
-    private double lotSize = 0.1;
+    private double lotSize = 1;
 
 
     public int getMaxOrderSize() {

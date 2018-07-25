@@ -3,6 +3,7 @@ package com.estela.neko.common;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
@@ -43,7 +44,7 @@ public class HttpHelper {
                 "symbol=htusdt&AccessKeyId=" + apiKey);
           /*  String sendGet = get("https://api.huobipro.com/market/trade",
                 "symbol=htusdt&AccessKeyId=" + apiKey);*/
-
+            logger.info("获取的价格数据结构:"+sendGet);
             JSONObject parseObject = JSON.parseObject(sendGet);
             proPrice = parseObject.getJSONObject("tick").getJSONArray("data").getJSONObject(0)
                 .getBigDecimal("price");
@@ -57,21 +58,21 @@ public class HttpHelper {
         return proPrice;
     }
 
-    private String get(String url, String param) throws Exception {
+    public String get(String urlNameString) throws Exception {
 
         String result = null;
         try {
-            String urlNameString = url + "?" + param;
 
             HttpClient httpClient = manager.getHttpClient();
-            HttpPost httpPost = new HttpPost(urlNameString);
-            httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
-            httpPost.addHeader("user-agent",
+            HttpGet httpGet = new HttpGet(urlNameString);
+            httpGet.addHeader("Content-Type", "application/x-www-form-urlencoded");
+            httpGet.addHeader("user-agent",
                 "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 "
                     + "Safari/537.36");
-            httpPost.addHeader("Accept-Language", "zh-cn");
+            httpGet.addHeader("Accept-Language", "zh-cn");
 
-            HttpResponse response = httpClient.execute(httpPost);
+            HttpResponse response = httpClient.execute(httpGet);
+            logger.info("http get response:"+response);
             if (response != null) {
                 HttpEntity resEntity = response.getEntity();
                 if (resEntity != null) {
