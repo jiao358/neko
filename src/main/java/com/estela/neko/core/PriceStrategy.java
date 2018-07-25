@@ -41,7 +41,7 @@ public class PriceStrategy {
 
     private ScheduledExecutorService scheduleReflash = new ScheduledThreadPoolExecutor(1);
 
-    private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(1);
+    private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(15);
 
     private ExecutorService buyAccessPool = Executors.newFixedThreadPool(10);
     private ExecutorService sellAccessPool = Executors.newFixedThreadPool(5);
@@ -68,11 +68,13 @@ public class PriceStrategy {
             }, 100, 500, TimeUnit.MILLISECONDS);
         }
 
-        tradingSchedule.scheduleWithFixedDelay(() -> {
+
+
+        tradingSchedule.scheduleAtFixedRate(() -> {
 
             BigDecimal currentPrice = priceMemery.getCurrentPrice();
             autoMartket(currentPrice);
-        }, 4000, 250, TimeUnit.MILLISECONDS);
+        }, 200, 250, TimeUnit.MILLISECONDS);
     }
 
     /**
