@@ -141,7 +141,7 @@ public class PriceStrategy {
         }
 
     }
-    public synchronized void buyMarket(int price) {
+    public void buyMarket(int price) {
 
         if(sell_order.contains(price + step) && !price_order.contains(price)) {
             logger.info("进入buyMarket 购买价格:" + price);
@@ -194,7 +194,7 @@ public class PriceStrategy {
 
     }
 
-    public synchronized void sell(int priceStep) {
+    public  void sell(int priceStep) {
 
         AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
         Accounts account = accounts.getData().get(0);
