@@ -94,6 +94,7 @@ public class PriceStrategy {
             logger.warn("当前价格超过风险设定阈值,停止买入交易 当前价格:" + currentPrice + ",阈值价格:" + riskPrice);
             return;
         }
+        logger.info("自动行情交易,当前市价:"+ currentPrice.intValue()  + " 当前是否满足准入:"+( currentPrice.intValue()%strategyStatus.getFluctuation()==0));
         if (strategyStatus.getStartOrder() != null &&  strategyStatus.isSatisfyTrading(currentPrice.intValue(),strategyStatus.getStartOrder().intValue())) {
             logger.info("执行第一次StartOrder: 当前价格:"+currentPrice.intValue());
             //指定开始执行交易价格,如果没有这个交易价格则等待
