@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,7 +35,7 @@ public class PriceMemery {
     /**
      * 用于存放 整点的交易记录
      */
-    private ArrayList<Integer> orderList = new ArrayList<>(50);
+    private HashSet<Integer> orderList = new HashSet<>();
 
 
     /**
@@ -89,16 +90,26 @@ public class PriceMemery {
      */
     public synchronized void addOrder(BigDecimal orderPrice){
         orderList.add(orderPrice.intValue());
-        if(!orderList.contains(orderPrice.intValue()+ strategyStatus.getFluctuation().intValue())){
-            orderList.add(orderPrice.intValue()+ strategyStatus.getFluctuation().intValue())   ;
-        }
 
         preOrderPrice = orderPrice;
 
+    }
+
+    /**
+     * 执行卖单加入
+     * @param sellOrderPrice
+     */
+    public synchronized void sellOrder(BigDecimal sellOrderPrice){
+        orderList.add(sellOrderPrice.intValue());
     }
 
     public int getPreOrderPrice(){
         return preOrderPrice.intValue();
     }
 
+
+    public String getOrderLists(){
+        return orderList.toString();
+
+    }
 }

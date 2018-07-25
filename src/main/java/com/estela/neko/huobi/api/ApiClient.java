@@ -58,6 +58,7 @@ public class ApiClient {
 
 
 
+
     /**
      * 查询交易对
      *
@@ -89,10 +90,11 @@ public class ApiClient {
      * @return Order id.
      */
     public Long createOrder(CreateOrderRequest request) {
-        ApiResponse<Long> resp =
+      /*  ApiResponse<Long> resp =
                 post("/v1/order/orders", request, new TypeReference<ApiResponse<Long>>() {
                 });
-        return resp.checkAndReturn();
+        return resp.checkAndReturn();*/
+      return 88912L;
     }
 
     /**
@@ -102,10 +104,11 @@ public class ApiClient {
      * @return Order id.
      */
     public String placeOrder(long orderId) {
-        ApiResponse<String> resp = post("/v1/order/orders/" + orderId + "/place", null,
+      /*  ApiResponse<String> resp = post("/v1/order/orders/" + orderId + "/place", null,
                 new TypeReference<ApiResponse<String>>() {
                 });
-        return resp.checkAndReturn();
+        return resp.checkAndReturn();*/
+      return "succPino";
     }
 
 
@@ -302,9 +305,15 @@ public class ApiClient {
      * @return
      */
     public OrdersDetailResponse ordersDetail(String orderId) {
-        OrdersDetailResponse resp = get("/v1/order/orders/" + orderId, null, new TypeReference<OrdersDetailResponse>() {
+     /*   OrdersDetailResponse resp = get("/v1/order/orders/" + orderId, null, new TypeReference<OrdersDetailResponse>() {
         });
-        return resp;
+        return resp;*/
+        OrdersDetailResponse resp = new OrdersDetailResponse();
+        Map e = new HashMap();
+        e.put("state","filled");
+        resp.setData(e);
+        return  resp;
+
     }
 
 

@@ -11,12 +11,10 @@ import com.estela.neko.huobi.response.OrdersDetailResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -95,12 +93,14 @@ public class PriceStrategy {
             return;
         }
         if (strategyStatus.getStartOrder() != null &&  strategyStatus.isSatisfyTrading(currentPrice.intValue(),strategyStatus.getStartOrder().intValue())) {
+            logger.info("执行第一次StartOrder: 当前价格:"+currentPrice.intValue());
             //指定开始执行交易价格,如果没有这个交易价格则等待
             buyOrder(strategyStatus.getStartOrder());
             strategyStatus.setStartOrder(null);
         } else {
             //直接将当前价格作为基准价格
             if (priceMemery.noAnyTradeOrder()) {
+                logger.info("以基准价格执行作为价格原型: 当前价格:"+currentPrice.intValue());
                 buyOrder(currentPrice);
             } else {
 
@@ -111,9 +111,12 @@ public class PriceStrategy {
                 int lastPrice = priceMemery.getPreOrderPrice();
                 //如果当前价格满足交易点数策略  并且满足同一位置只有一个多单  才能执行交易
                 if(strategyStatus.isSatisfyTrading(currentPrice.intValue(),lastPrice) && !priceMemery.hasSameOrder(currentPrice.intValue())){
+
                     if(!priceMemery.hasSameOrder(fillPrice(currentPrice.intValue(),lastPrice))){
                         buyOrder(new BigDecimal(fillPrice(currentPrice.intValue(),lastPrice)));
                     }
+                }else{
+                    logger.info("当前价格不满足准入模型 价格:"+currentPrice.intValue() +" 上次交易价格:"+lastPrice +"当前持单价格:"+priceMemery.getOrderLists());
                 }
 
             }
@@ -132,15 +135,19 @@ public class PriceStrategy {
 
         int aa =lastPrice/fluctuation *fluctuation;
         int bb =currentPrice/fluctuation *fluctuation;
+        int result =lastPrice ;
         if(aa-bb==0){
             //不交易
-            return lastPrice;
         }else if( aa-bb >0){
             //市场下跌
-            return lastPrice-fluctuation;
+            result= lastPrice-fluctuation;
         }else{
-            return lastPrice + fluctuation;
+            result=  lastPrice + fluctuation;
         }
+
+        logger.info("价格补全策略,当前交易价格:"+currentPrice+",上次交易价格:"+lastPrice);
+
+        return result;
     }
 
     /**
@@ -247,7 +254,7 @@ public class PriceStrategy {
         // -------------------------------------------------------
         String r = apiClient.placeOrder(orderId);
         logger.info("执行挂空单:" + createOrderReq + "结果:" + r);
-
+        priceMemery.sellOrder(new BigDecimal(price));
         //验证空单结果
         sellAccessPool.execute(()->{
             boolean sellSuccess = false;

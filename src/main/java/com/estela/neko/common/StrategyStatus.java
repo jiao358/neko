@@ -61,6 +61,8 @@ public class StrategyStatus {
 
 
 
+
+
     /**
      * 判断当前价格是否 满足交易策略
      *
