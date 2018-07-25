@@ -43,7 +43,9 @@ public class PriceStrategy {
 
     private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(1);
 
-    private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
+    private ScheduledExecutorService 
+    
+    ScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
     ExecutorService markPool = Executors.newFixedThreadPool(10);
     ExecutorService sellForLimit = Executors.newFixedThreadPool(10);
@@ -143,6 +145,8 @@ public class PriceStrategy {
     }
     public synchronized void buyMarket(int price) {
             logger.info("进入buyMarket 购买价格:" + price);
+        synchronized(lock){
+           if (!sell_order.contains(price + step) && !price_order.contains(price)) {
             try {
                 lastBuyPrice = price;
                 cash -= lastBuyPrice * amount;
@@ -155,8 +159,8 @@ public class PriceStrategy {
                 // create order:
                 CreateOrderRequest createOrderReq = new CreateOrderRequest();
                 createOrderReq.accountId = String.valueOf(accountId);
-                createOrderReq.amount = Double.toString(amount * (double)price / 10000);
-                // createOrderReq.price = Double.toString((double) price / 10000);
+                createOrderReq.amount =amount;
+          
                 createOrderReq.symbol = "htusdt";
                 createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
                 createOrderReq.source = "api";
@@ -185,7 +189,8 @@ public class PriceStrategy {
             } catch (Exception e) {
                 logger.error("挂空单异常",e);
             }
-
+}
+}
 
 
 
@@ -200,7 +205,7 @@ public class PriceStrategy {
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
         createOrderReq.amount = String.valueOf(amount);
-        createOrderReq.price = String.valueOf(priceStep);
+        createOrderReq.price = String.valueOf((double)priceStep/10000.0);
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
         createOrderReq.source = "api";
