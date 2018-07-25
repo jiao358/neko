@@ -28,7 +28,7 @@ public class StrategyStatus {
     /**
      * 交易手数
      */
-    private double lotSize = 1;
+    private double lotSize = 1.0;
 
 
     public int getMaxOrderSize() {
