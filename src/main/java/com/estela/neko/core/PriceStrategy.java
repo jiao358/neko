@@ -103,8 +103,8 @@ public class PriceStrategy {
 
         } else {
             //直接将当前价格作为基准价格
-            if (priceMemery.noAnyTradeOrder()) {
-                logger.info("以基准价格执行作为价格原型: 当前价格:"+currentPrice.intValue());
+            if (priceMemery.noAnyTradeOrder() && currentPrice.intValue()%strategyStatus.getFluctuation()==0) {
+                logger.info("以基准价格执行作为价格原型 (100) : 当前价格:"+currentPrice.intValue());
                 buyOrder(currentPrice);
             } else {
 
@@ -128,6 +128,7 @@ public class PriceStrategy {
         }
 
     }
+
 
     /**
      * 补全满足策略的价格
