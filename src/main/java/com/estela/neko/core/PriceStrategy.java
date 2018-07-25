@@ -141,53 +141,58 @@ public class PriceStrategy {
         }
 
     }
-    public synchronized void buyMarket(int price) {
+    public  void buyMarket(int price) {
             logger.info("进入buyMarket 购买价格:" + price);
-            try {
-                lastBuyPrice = price;
-                cash -= lastBuyPrice * amount;
+            synchronized (lock){
+                if (!sell_order.contains(price + step) && !price_order.contains(price)){
 
-                price_order.add(price);
+                    try {
+                        lastBuyPrice = price;
+                        cash -= lastBuyPrice * amount;
 
-                AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-                Accounts account = accounts.getData().get(0);
-                long accountId = account.getId();
-                // create order:
-                CreateOrderRequest createOrderReq = new CreateOrderRequest();
-                createOrderReq.accountId = String.valueOf(accountId);
-                createOrderReq.amount = Double.toString(amount * (double)price / 10000);
-                // createOrderReq.price = Double.toString((double) price / 10000);
-                createOrderReq.symbol = "htusdt";
-                createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
-                createOrderReq.source = "api";
-                // -------------------------------------------------------
-                long orderId = apiClient.createOrder(createOrderReq);
-                // place order:
+                        price_order.add(price);
 
-                // ------------------------------------------------------ 执行订单
-                // -------------------------------------------------------
-                String r = apiClient.placeOrder(orderId);
-                logger.info("买单成功返回值:"+ r);
-                OrdersDetailResponse ordersDetail = apiClient
-                    .ordersDetail(String.valueOf(orderId));
-                String state = (String) ((Map) (ordersDetail.getData())).get("state");
-                if ("filled".equals(state)) {
+                        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+                        Accounts account = accounts.getData().get(0);
+                        long accountId = account.getId();
+                        // create order:
+                        CreateOrderRequest createOrderReq = new CreateOrderRequest();
+                        createOrderReq.accountId = String.valueOf(accountId);
+                        createOrderReq.amount = String.valueOf(amount);
+                        // createOrderReq.price = Double.toString((double) price / 10000);
+                        createOrderReq.symbol = "htusdt";
+                        createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
+                        createOrderReq.source = "api";
+                        // -------------------------------------------------------
+                        long orderId = apiClient.createOrder(createOrderReq);
+                        // place order:
 
-                    sell(price+step);
+                        // ------------------------------------------------------ 执行订单
+                        // -------------------------------------------------------
+                        String r = apiClient.placeOrder(orderId);
+                        logger.info("买单成功返回值:"+ r);
+                        OrdersDetailResponse ordersDetail = apiClient
+                            .ordersDetail(String.valueOf(orderId));
+                        String state = (String) ((Map) (ordersDetail.getData())).get("state");
+                        if ("filled".equals(state)) {
 
-                }else {
-                    logger.error("购买价格:"+price+"买单失败");
-                    price_order.remove(price);
+                            sell(price+step);
+
+                        }else {
+                            logger.error("购买价格:"+price+"买单失败");
+                            price_order.remove(price);
+                        }
+
+
+
+                    } catch (Exception e) {
+                        logger.error("挂空单异常",e);
+                    }
                 }
 
 
 
-            } catch (Exception e) {
-                logger.error("挂空单异常",e);
             }
-
-
-
 
 
     }
@@ -200,7 +205,7 @@ public class PriceStrategy {
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
         createOrderReq.amount = String.valueOf(amount);
-        createOrderReq.price = String.valueOf(priceStep);
+        createOrderReq.price = String.valueOf((double)priceStep/10000);
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
         createOrderReq.source = "api";
