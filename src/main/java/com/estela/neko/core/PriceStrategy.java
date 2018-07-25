@@ -43,6 +43,8 @@ public class PriceStrategy {
 
     private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(15);
 
+    ExecutorService markPool = Executors.newFixedThreadPool(30);
+
     private ExecutorService buyAccessPool = Executors.newFixedThreadPool(10);
     private ExecutorService sellAccessPool = Executors.newFixedThreadPool(5);
 
@@ -64,17 +66,17 @@ public class PriceStrategy {
                     logger.error("刷新价格失败");
                 }
                 priceMemery.reflashPrice(currentPrice);
+                markPool.execute(()->{
+                    logger.info("自动交易开始执行");
+                    autoMartket(priceMemery.getCurrentPrice());
 
+                });
             }, 100, 500, TimeUnit.MILLISECONDS);
         }
 
 
 
-        tradingSchedule.scheduleAtFixedRate(() -> {
 
-            BigDecimal currentPrice = priceMemery.getCurrentPrice();
-            autoMartket(currentPrice);
-        }, 200, 250, TimeUnit.MILLISECONDS);
     }
 
     /**
