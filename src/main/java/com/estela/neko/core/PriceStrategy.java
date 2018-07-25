@@ -74,7 +74,7 @@ public class PriceStrategy {
         tradingSchedule.scheduleWithFixedDelay(()->{
 
             checkBuyMarket();
-        },100,200,TimeUnit.MILLISECONDS);
+        },100,50,TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(()->{
             logger.info("开始确认 sellOrder 是否成交信息");
