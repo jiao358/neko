@@ -43,9 +43,7 @@ public class PriceStrategy {
 
     private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(1);
 
-    private ScheduledExecutorService 
-    
-    ScheduleOrder = new ScheduledThreadPoolExecutor(1);
+    private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
     ExecutorService markPool = Executors.newFixedThreadPool(10);
     ExecutorService sellForLimit = Executors.newFixedThreadPool(10);
