@@ -42,7 +42,7 @@ public class TradeSerivce {
     @RequestMapping("/price")
     public Object getPrice() throws Exception {
 
-        Object ob=helper.get("https://api.huobipro.com/market/tradesymbol=htusdt&AccessKeyId="+"a7fd725a-502746cd-69b903fd-4418a");
+        Object ob=helper.get("https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId="+"a7fd725a-502746cd-69b903fd-4418a");
         return ob;
 
 
@@ -54,8 +54,7 @@ public class TradeSerivce {
         BufferedReader in = null;
         long beginTime = System.currentTimeMillis();
         try {
-            String urlNameString ="https://api.huobipro.com/market/tradesymbol=htusdt&AccessKeyId=\"+\"a7fd725a"
-                + "-502746cd-69b903fd-4418a";
+            String urlNameString ="https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=a7fd725a-502746cd-69b903fd-4418a";
             URL realUrl = new URL(urlNameString);
             // if ("https".equalsIgnoreCase(realUrl.getProtocol())) {
             // ignoreSsl();
