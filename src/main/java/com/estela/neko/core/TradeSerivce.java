@@ -12,7 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author fuming.lj 2018/7/23
@@ -35,9 +41,63 @@ public class TradeSerivce {
 
     @RequestMapping("/price")
     public Object getPrice() throws Exception {
+
         Object ob=helper.get("https://api.huobipro.com/market/tradesymbol=htusdt&AccessKeyId="+"a7fd725a-502746cd-69b903fd-4418a");
         return ob;
 
+
+    }
+    URLConnection connection ;
+    @RequestMapping("/price2")
+    public Object getPrice2() throws Exception {
+        String result = "";
+        BufferedReader in = null;
+        long beginTime = System.currentTimeMillis();
+        try {
+            String urlNameString ="https://api.huobipro.com/market/tradesymbol=htusdt&AccessKeyId=\"+\"a7fd725a"
+                + "-502746cd-69b903fd-4418a";
+            URL realUrl = new URL(urlNameString);
+            // if ("https".equalsIgnoreCase(realUrl.getProtocol())) {
+            // ignoreSsl();
+            // }
+            // 打开和URL之间的连接
+
+            if(connection==null){
+               connection = realUrl.openConnection();
+                // 设置通用的请求属性
+                connection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+                connection.setRequestProperty("user-agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 "
+                        + "Safari/537.36");
+                connection.setRequestProperty("Accept-Language", "zh-cn");
+                // 建立实际的连接
+                connection.setConnectTimeout(500);
+                connection.connect();
+            }
+
+
+            // 获取所有响应头字段
+            Map<String, List<String>> map = connection.getHeaderFields();
+
+            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            while ((line = in.readLine()) != null) {
+                result += line;
+            }
+        }
+        // 使用finally块来关闭输入流
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        }
+
+
+        return result+ "\\n"+ (System.currentTimeMillis()-beginTime);
 
     }
 
