@@ -4,7 +4,6 @@ import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.huobi.api.ApiClient;
-import com.sun.deploy.net.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,7 @@ public class TradeSerivce {
     ApiClient apiClient;
 
     @RequestMapping("/price")
-    public Object getPrice(){
+    public Object getPrice() throws Exception {
         Object ob=helper.get("https://api.huobipro.com/market/tradesymbol=htusdt&AccessKeyId="+"a7fd725a-502746cd-69b903fd-4418a");
         return ob;
 
