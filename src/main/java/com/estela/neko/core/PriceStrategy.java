@@ -72,7 +72,7 @@ public class PriceStrategy {
 
 
         tradingSchedule.scheduleWithFixedDelay(()->{
-
+            logger.info("进行买入执行");
             checkBuyMarket();
         },100,50,TimeUnit.MILLISECONDS);
 
@@ -126,11 +126,15 @@ public class PriceStrategy {
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
-        if (isSatisfyTrading(currentAppPrice,price)) {
+        boolean access =isSatisfyTrading(currentAppPrice,price);
+        logger.info("当前价格:"+currentAppPrice+",等比价格:"+price+"是否满足准入条件:"+access);
+        if (access) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
-                if(price_order.size()<strategyStatus.getMaxOrderSize()){
-                    buyMarket(price);
-                }
+                logger.info("满足准入条件");
+                buyMarket(price);
+             /*   if(price_order.size()<strategyStatus.getMaxOrderSize()){
+
+                }*/
 
 
             }
