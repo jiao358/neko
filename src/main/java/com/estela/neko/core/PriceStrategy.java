@@ -205,7 +205,7 @@ public class PriceStrategy {
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
         createOrderReq.amount = String.valueOf(amount);
-        createOrderReq.price = Double.valueOf((double)priceStep/10000.0)).toString();
+        createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
         createOrderReq.source = "api";
