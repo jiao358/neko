@@ -141,9 +141,7 @@ public class PriceStrategy {
         }
 
     }
-    public void buyMarket(int price) {
-
-        if(sell_order.contains(price + step) && !price_order.contains(price)) {
+    public synchronized void buyMarket(int price) {
             logger.info("进入buyMarket 购买价格:" + price);
             try {
                 lastBuyPrice = price;
@@ -187,7 +185,7 @@ public class PriceStrategy {
             } catch (Exception e) {
                 logger.error("挂空单异常",e);
             }
-        }
+
 
 
 
@@ -229,6 +227,9 @@ public class PriceStrategy {
         double lot = amount;
         int result = currentPrice-zhengdianPrice;
         int diff = strategyStatus.getDiffPrice();
+        if(currentPrice==0){
+            return false;
+        }
         if(result>=0 && result<=diff){
             return true;
         }
