@@ -206,14 +206,14 @@ public class PriceStrategy {
                           String amount = (String) ((Map) (ordersDetail.getData()))
                               .get("field-amount");
                           logger.info("准备挂空单，售出价格:" + sellPrice + " ,数量: " + amount);
-                          double parseDouble = Double.parseDouble(amount);
+                    /*      double parseDouble = Double.parseDouble(amount);
                           if (parseDouble < 0.1) {
                               amount = "0.1";
                           } else {
                               BigDecimal bg = new BigDecimal(amount).setScale(2, RoundingMode.UP);
                               amount = bg.toString();
                           }
-
+*/
                           sell(sellPrice, amount);
                           priceMemery.cleanPrice(buyPrice);
                           tradeOver = true;
