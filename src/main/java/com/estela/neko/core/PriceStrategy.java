@@ -159,7 +159,7 @@ public class PriceStrategy {
                 // create order:
                 CreateOrderRequest createOrderReq = new CreateOrderRequest();
                 createOrderReq.accountId = String.valueOf(accountId);
-                createOrderReq.amount =amount;
+                createOrderReq.amount =String.valueOf(amount);
           
                 createOrderReq.symbol = "htusdt";
                 createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
