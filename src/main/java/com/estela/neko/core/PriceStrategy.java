@@ -126,10 +126,12 @@ public class PriceStrategy {
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
-        if (currentAppPrice == price) {
+        if (isSatisfyTrading(currentAppPrice,price)) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
+                if(price_order.size()<strategyStatus.getMaxOrderSize()){
+                    buyMarket(price);
+                }
 
-                buyMarket(price);
 
             }
         }
@@ -213,7 +215,29 @@ public class PriceStrategy {
 
     }
 
+    /**
+     * 判断当前价格是否 满足交易策略
+     *
+     * @param currentPrice  当前价格
+     * @return
+     */
+    public boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
+        double lot = amount;
+        int result = currentPrice-zhengdianPrice;
+        int diff = strategyStatus.getDiffPrice();
+        if(result>=0 && result<=diff){
+            return true;
+        }
+        if(result<0 && result<= (-1*diff)){
+            return true;
+        }
 
+
+
+
+
+        return false;
+    }
 
 
 
