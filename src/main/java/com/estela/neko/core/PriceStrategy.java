@@ -44,6 +44,8 @@ public class PriceStrategy {
     private ScheduledExecutorService tradingSchedule = new ScheduledThreadPoolExecutor(1);
 
     private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
+    private ScheduledExecutorService buyScheduleOrder = new ScheduledThreadPoolExecutor(1);
+
 
     ExecutorService markPool = Executors.newFixedThreadPool(10);
     ExecutorService sellForLimit = Executors.newFixedThreadPool(10);
@@ -74,7 +76,7 @@ public class PriceStrategy {
         tradingSchedule.scheduleWithFixedDelay(()->{
             logger.info("进行买入执行");
             checkBuyMarket();
-        },100,50,TimeUnit.MILLISECONDS);
+        },100,100,TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(()->{
                 logger.info("开始确认 sellOrder 是否成交信息");
@@ -90,6 +92,7 @@ public class PriceStrategy {
 
                             sell_order.remove(price);
                             price_order.remove(price-100);
+                            sellOrder.remove(orderId);
                         }
 
                     }catch (Exception e){
@@ -98,10 +101,31 @@ public class PriceStrategy {
 
                 });
 
+            }
+            ,1000,400,TimeUnit.MILLISECONDS);
 
 
+        buyScheduleOrder.scheduleAtFixedRate(()->{
+                logger.info("开始确认 buyOrder 是否全部成交信息");
 
+                buyOrder.forEach((orderId,price)->{
+                    try{
+                        OrdersDetailResponse ordersDetail = apiClient
+                            .ordersDetail(String.valueOf(orderId));
+                        logger.info("确认购买订单号:"+orderId+"订单价格:"+price);
+                        String state = (String)((Map)(ordersDetail.getData())).get("state");
+                        if ("filled".equals(state)) {
+                            logger.info("多单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
 
+                            buyOrder.remove(orderId);
+                            sell(price+step);
+                        }
+
+                    }catch (Exception e){
+                        logger.error("清除sellOrder 异常 订单:"+orderId,e);
+                    }
+
+                });
 
             }
             ,1000,400,TimeUnit.MILLISECONDS);
@@ -112,6 +136,7 @@ public class PriceStrategy {
     public Set<Integer> fullBuy_order = Collections.synchronizedSet(new HashSet());
     //存储 order  和售卖价格  当确定售卖后 清除 price_order 以及sell_order
     public ConcurrentHashMap<Long,Integer> sellOrder = new ConcurrentHashMap();
+    public ConcurrentHashMap<Long,Integer> buyOrder = new ConcurrentHashMap();
 
     public Object lock = new Object();
 
@@ -177,8 +202,11 @@ public class PriceStrategy {
 
                         sell(price+step);
 
-                    }else {
-                        logger.error("购买价格:"+price+"买单失败");
+                    }else if("submitted".equals(state) || "partial-filled".equals(state) ) {
+                        logger.info("购买价格:"+price+"订单执行中");
+                        buyOrder.put(orderId,price);
+                    }else{
+                        logger.error("购买价格:"+price+"订单执行中");
                         price_order.remove(price);
                     }
 
