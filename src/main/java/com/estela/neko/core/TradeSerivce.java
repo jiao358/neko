@@ -1,9 +1,12 @@
 package com.estela.neko.core;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.huobi.api.ApiClient;
+import com.estela.neko.huobi.response.OrdersDetailResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,7 +104,15 @@ public class TradeSerivce {
         return result+ "\\n"+ (System.currentTimeMillis()-beginTime);
 
     }
+    @RequestMapping("/order")
+    public Object getOrder(Long orderId){
 
+        OrdersDetailResponse ordersDetail = apiClient
+            .ordersDetail(String.valueOf(orderId));
+        return JSONObject.toJSON(ordersDetail);
+
+
+    }
 
     @RequestMapping("/setProperties")
     public StrategyStatus setProperties(String riskPrice,String maxOrderSize ,String lotSize ,String diffPrice){

@@ -45,6 +45,8 @@ public class PriceStrategy {
 
     private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
+    private ScheduledExecutorService buyScheduleOrder = new ScheduledThreadPoolExecutor(1);
+
     ExecutorService markPool = Executors.newFixedThreadPool(10);
     ExecutorService sellForLimit = Executors.newFixedThreadPool(10);
 
@@ -74,7 +76,7 @@ public class PriceStrategy {
         tradingSchedule.scheduleWithFixedDelay(()->{
             logger.info("进行买入执行");
             checkBuyMarket();
-        },100,50,TimeUnit.MILLISECONDS);
+        },100,100,TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(()->{
             logger.info("开始确认 sellOrder 是否成交信息");
@@ -106,12 +108,40 @@ public class PriceStrategy {
             }
         ,1000,400,TimeUnit.MILLISECONDS);
 
+
+        buyScheduleOrder.scheduleAtFixedRate(()->{
+          buyerOrder.forEach((orderId,price)->{
+
+              try{
+                  OrdersDetailResponse ordersDetail = apiClient
+                      .ordersDetail(String.valueOf(orderId));
+                  logger.info("确认买单:"+orderId+"订单价格:"+price);
+                  String state = (String)((Map)(ordersDetail.getData())).get("state");
+                  if ("filled".equals(state)) {
+                      logger.info("买单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+
+                      sell(price+step);
+
+                  }
+
+              }catch (Exception e){
+                  logger.error("清除sellOrder 异常 订单:"+orderId,e);
+              }
+
+
+
+
+          });
+
+        },1000,200,TimeUnit.MILLISECONDS);
+
     }
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> sell_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> fullBuy_order = Collections.synchronizedSet(new HashSet());
     //存储 order  和售卖价格  当确定售卖后 清除 price_order 以及sell_order
     public ConcurrentHashMap<Long,Integer> sellOrder = new ConcurrentHashMap();
+    public ConcurrentHashMap<Long,Integer> buyerOrder = new ConcurrentHashMap();
 
     public Object lock = new Object();
 
@@ -122,7 +152,7 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final double amount =0.1;
+    public static final String amount ="0.1";
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
@@ -148,7 +178,7 @@ public class PriceStrategy {
 
                     try {
                         lastBuyPrice = price;
-                        cash -= lastBuyPrice * amount;
+                        cash -= lastBuyPrice * Double.parseDouble(amount);
 
                         price_order.add(price);
 
@@ -179,8 +209,9 @@ public class PriceStrategy {
                             sell(price+step);
 
                         }else {
-                            logger.error("购买价格:"+price+"买单失败");
-                            price_order.remove(price);
+                            logger.error("购买价格:"+price+"买单未全部成交");
+                            buyerOrder.put(orderId,price);
+
                         }
 
 
@@ -229,7 +260,6 @@ public class PriceStrategy {
      * @return
      */
     public boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
-        double lot = amount;
         int result = currentPrice-zhengdianPrice;
         int diff = strategyStatus.getDiffPrice();
         if(currentPrice==0){
