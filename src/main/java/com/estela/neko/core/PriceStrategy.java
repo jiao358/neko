@@ -118,6 +118,9 @@ public class PriceStrategy {
                             logger.info("多单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
                             String filledAmount = (String) ((Map) (ordersDetail.getData()))
                                 .get("field-amount");
+                            if(Double.parseDouble(filledAmount)<0.1){
+                                filledAmount="0.1";
+                            }
 
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
                             filledAmount = bg.toString();
@@ -151,7 +154,7 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final double amount =0.1;
+    public static final double amount =1;
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
@@ -205,6 +208,9 @@ public class PriceStrategy {
                     if ("filled".equals(state)) {
                         String filledAmount = (String) ((Map) (ordersDetail.getData()))
                             .get("field-amount");
+                        if(Double.parseDouble(filledAmount)<0.1){
+                            filledAmount="0.1";
+                        }
 
                         BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
                         filledAmount = bg.toString();
