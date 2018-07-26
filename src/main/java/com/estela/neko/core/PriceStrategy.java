@@ -124,7 +124,7 @@ public class PriceStrategy {
                                 filledAmount="0.1";
                             }
 
-                            BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
+                            BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.UP);
                             filledAmount = bg.toString();
                             synchronized (lock){
                                 buyOrder.remove(orderId);
@@ -217,7 +217,7 @@ public class PriceStrategy {
                             filledAmount="0.1";
                         }
 
-                        BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
+                        BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.UP);
                         filledAmount = bg.toString();
 
                         sell(price+step,filledAmount);
