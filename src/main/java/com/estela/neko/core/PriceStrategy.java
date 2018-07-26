@@ -89,10 +89,12 @@ public class PriceStrategy {
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
                             logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                            synchronized (lock){
+                                sell_order.remove(price);
+                                price_order.remove(price-100);
+                                sellOrder.remove(orderId);
+                            }
 
-                            sell_order.remove(price);
-                            price_order.remove(price-100);
-                            sellOrder.remove(orderId);
                         }
 
                     }catch (Exception e){
@@ -124,7 +126,9 @@ public class PriceStrategy {
 
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
                             filledAmount = bg.toString();
-                            buyOrder.remove(orderId);
+                            synchronized (lock){
+                                buyOrder.remove(orderId);
+                            }
                             sell(price+step,filledAmount);
                         }
 
@@ -154,11 +158,11 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final double amount =1;
+    public static final double amount =0.1;
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
-        boolean access =isSatisfyTrading(currentAppPrice,price);
+        boolean access =currentAppPrice==price;
         logger.info("当前价格:"+currentAppPrice+",等比价格:"+price+"是否满足准入条件:"+access);
         if (access) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
@@ -219,10 +223,14 @@ public class PriceStrategy {
 
                     }else if("submitted".equals(state) || "partial-filled".equals(state) ) {
                         logger.info("购买价格:"+price+"订单执行中");
-                        buyOrder.put(orderId,price);
+                        synchronized (lock){
+                            buyOrder.put(orderId,price);
+                        }
                     }else{
                         logger.error("购买价格:"+price+"订单执行中");
-                        price_order.remove(price);
+                        synchronized (lock){
+                            price_order.remove(price);
+                        }
                     }
 
 
@@ -253,8 +261,10 @@ public class PriceStrategy {
 
         long orderId = apiClient.createOrder(createOrderReq);
         String r = apiClient.placeOrder(orderId);
-        sell_order.add(priceStep);
-        sellOrder.put(orderId,priceStep);
+        synchronized (lock){
+            sell_order.add(priceStep);
+            sellOrder.put(orderId,priceStep);
+        }
 
 
 
