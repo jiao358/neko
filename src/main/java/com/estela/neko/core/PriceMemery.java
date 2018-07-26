@@ -21,7 +21,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 @Service
 public class PriceMemery {
 
-    public static int priceNow;
+    public volatile static int priceNow;
 
 
 

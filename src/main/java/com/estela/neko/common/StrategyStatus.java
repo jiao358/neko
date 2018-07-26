@@ -42,7 +42,7 @@ public class StrategyStatus {
     /**
      * 计算误差  3个点以内
      */
-    private int diffPrice =3;
+    private int diffPrice =5;
     /**
      * 已经完成的卖单
      */

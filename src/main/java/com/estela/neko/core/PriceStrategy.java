@@ -89,11 +89,9 @@ public class PriceStrategy {
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
                             logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-                            synchronized (lock){
                                 sell_order.remove(price);
                                 price_order.remove(price-100);
                                 sellOrder.remove(orderId);
-                            }
 
                         }
 
@@ -126,9 +124,7 @@ public class PriceStrategy {
 
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                             filledAmount = bg.toString();
-                            synchronized (lock){
                                 buyOrder.remove(orderId);
-                            }
                             sell(price+step,filledAmount);
                         }
 
@@ -159,7 +155,7 @@ public class PriceStrategy {
 
     public static int cash = 0 * 10000;
     public static  double amount =10;
-    public synchronized void checkBuyMarket() {
+    public  void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
         boolean access =currentAppPrice==price;
@@ -177,9 +173,9 @@ public class PriceStrategy {
         }
 
     }
-    public synchronized void buyMarket(int price) {
+    public  void buyMarket(int price) {
         logger.info("进入buyMarket 购买价格:" + price);
-        synchronized(lock){
+
             if (!price_order.contains(price)) {
                 try {
                     lastBuyPrice = price;
@@ -200,16 +196,31 @@ public class PriceStrategy {
                     createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
                     createOrderReq.source = "api";
                     // -------------------------------------------------------
-                    long orderId = apiClient.createOrder(createOrderReq);
+                    long orderId = 0L;
+                    String state ="";
+                    synchronized (lock){
+                        if(isSatisfyTrading(PriceMemery.priceNow,price)){
+
+                            orderId = apiClient.createOrder(createOrderReq);
+                            String r = apiClient.placeOrder(orderId);
+                        }
+                    }
+
+                    if(orderId==0L){
+                        logger.warn("价格变动过快 期待价格:"+price+" 实际当前市价:"+PriceMemery.priceNow);
+                        price_order.remove(price);
+                        return;
+                    }
+
                     // place order:
 
                     // ------------------------------------------------------ 执行订单
                     // -------------------------------------------------------
-                    String r = apiClient.placeOrder(orderId);
                     OrdersDetailResponse ordersDetail = apiClient
                         .ordersDetail(String.valueOf(orderId));
-                    String state = (String) ((Map) (ordersDetail.getData())).get("state");
-                    logger.warn("购买价格返回值:"+ r+" 此订单状态"+state);
+                    state = (String) ((Map) (ordersDetail.getData())).get("state");
+
+                    logger.warn("购买价格返回值:"+ orderId+" 此订单状态"+state);
                     if ("filled".equals(state)) {
                         String filledAmount = (String) ((Map) (ordersDetail.getData()))
                             .get("field-amount");
@@ -240,7 +251,7 @@ public class PriceStrategy {
                     logger.error("buymarket异常 购买失败",e);
                 }
             }
-        }
+
 
 
 
@@ -250,7 +261,7 @@ public class PriceStrategy {
     public  void sell(int priceStep,String fillAmount) {
 
 
-        synchronized (lock){
+
             try{
                 if(sell_order.contains(priceStep)){
                     logger.warn("已经含有这个单子价格:"+priceStep);
@@ -278,7 +289,6 @@ public class PriceStrategy {
             }catch (Exception e){
                 logger.error("售卖流程异常 price="+priceStep+"手数:"+fillAmount,e);
             }
-        }
 
 
 
