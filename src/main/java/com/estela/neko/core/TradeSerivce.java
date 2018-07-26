@@ -121,6 +121,11 @@ public class TradeSerivce {
    return JSONObject.toJSON(map);
 
     }
+    @RequestMapping("/setAmount")
+    public Object setAmount(String amount){
+        PriceStrategy.amount=Double.parseDouble(amount);
+        return PriceStrategy.amount;
+    }
 
     @RequestMapping("/setProperties")
     public StrategyStatus setProperties(String riskPrice,String maxOrderSize ,String lotSize ,String diffPrice){

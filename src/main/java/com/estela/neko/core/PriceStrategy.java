@@ -124,7 +124,7 @@ public class PriceStrategy {
                                 filledAmount="0.1";
                             }
 
-                            BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.UP);
+                            BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                             filledAmount = bg.toString();
                             synchronized (lock){
                                 buyOrder.remove(orderId);
@@ -158,7 +158,7 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final double amount =1.0;
+    public static  double amount =10;
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
@@ -217,7 +217,7 @@ public class PriceStrategy {
                             filledAmount="0.1";
                         }
 
-                        BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.UP);
+                        BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                         filledAmount = bg.toString();
 
                         sell(price+step,filledAmount);
