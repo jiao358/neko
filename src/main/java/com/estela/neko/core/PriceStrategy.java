@@ -116,9 +116,13 @@ public class PriceStrategy {
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
                             logger.info("多单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                            String filledAmount = (String) ((Map) (ordersDetail.getData()))
+                                .get("field-amount");
 
+                            BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
+                            filledAmount = bg.toString();
                             buyOrder.remove(orderId);
-                            sell(price+step);
+                            sell(price+step,filledAmount);
                         }
 
                     }catch (Exception e){
@@ -199,8 +203,13 @@ public class PriceStrategy {
                         .ordersDetail(String.valueOf(orderId));
                     String state = (String) ((Map) (ordersDetail.getData())).get("state");
                     if ("filled".equals(state)) {
+                        String filledAmount = (String) ((Map) (ordersDetail.getData()))
+                            .get("field-amount");
 
-                        sell(price+step);
+                        BigDecimal bg = new BigDecimal(filledAmount).setScale(6, RoundingMode.UP);
+                        filledAmount = bg.toString();
+
+                        sell(price+step,filledAmount);
 
                     }else if("submitted".equals(state) || "partial-filled".equals(state) ) {
                         logger.info("购买价格:"+price+"订单执行中");
@@ -223,14 +232,14 @@ public class PriceStrategy {
 
     }
 
-    public  void sell(int priceStep) {
+    public  void sell(int priceStep,String fillAmount) {
 
         AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
         Accounts account = accounts.getData().get(0);
         long accountId = account.getId();
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
-        createOrderReq.amount = String.valueOf(amount);
+        createOrderReq.amount = fillAmount;
         createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
