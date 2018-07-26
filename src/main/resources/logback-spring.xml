@@ -23,7 +23,7 @@
         <appender-ref ref="PROJECT"/>
     </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="PROJECT"/>
     </root>
 

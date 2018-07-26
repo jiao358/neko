@@ -164,7 +164,7 @@ public class PriceStrategy {
         int price = currentAppPrice / step * step;
         boolean access =currentAppPrice==price;
         logger.info("当前价格:"+currentAppPrice+",等比价格:"+price+"是否满足准入条件:"+access);
-        if (access) {
+        if (access && price!=0) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
                 logger.info("满足准入条件");
                 buyMarket(price);
@@ -185,6 +185,7 @@ public class PriceStrategy {
                     lastBuyPrice = price;
                     cash -= lastBuyPrice * amount;
 
+                    logger.warn("加入购买清单:"+price);
                     price_order.add(price);
 
                     AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
@@ -205,10 +206,10 @@ public class PriceStrategy {
                     // ------------------------------------------------------ 执行订单
                     // -------------------------------------------------------
                     String r = apiClient.placeOrder(orderId);
-                    logger.info("买单成功返回值:"+ r);
                     OrdersDetailResponse ordersDetail = apiClient
                         .ordersDetail(String.valueOf(orderId));
                     String state = (String) ((Map) (ordersDetail.getData())).get("state");
+                    logger.warn("购买价格返回值:"+ r+" 此订单状态"+state);
                     if ("filled".equals(state)) {
                         String filledAmount = (String) ((Map) (ordersDetail.getData()))
                             .get("field-amount");
@@ -236,7 +237,7 @@ public class PriceStrategy {
 
 
                 } catch (Exception e) {
-                    logger.error("挂空单异常",e);
+                    logger.error("buymarket异常 购买失败",e);
                 }
             }
         }
@@ -247,24 +248,29 @@ public class PriceStrategy {
     }
 
     public  void sell(int priceStep,String fillAmount) {
+        try{
+            logger.warn("进入售卖流程: 价格:"+priceStep+" amount:"+ fillAmount);
+            AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+            Accounts account = accounts.getData().get(0);
+            long accountId = account.getId();
+            CreateOrderRequest createOrderReq = new CreateOrderRequest();
+            createOrderReq.accountId = String.valueOf(accountId);
+            createOrderReq.amount = fillAmount;
+            createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
+            createOrderReq.symbol = "htusdt";
+            createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
+            createOrderReq.source = "api";
 
-        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-        Accounts account = accounts.getData().get(0);
-        long accountId = account.getId();
-        CreateOrderRequest createOrderReq = new CreateOrderRequest();
-        createOrderReq.accountId = String.valueOf(accountId);
-        createOrderReq.amount = fillAmount;
-        createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
-        createOrderReq.symbol = "htusdt";
-        createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
-        createOrderReq.source = "api";
-
-        long orderId = apiClient.createOrder(createOrderReq);
-        String r = apiClient.placeOrder(orderId);
-        synchronized (lock){
-            sell_order.add(priceStep);
-            sellOrder.put(orderId,priceStep);
+            long orderId = apiClient.createOrder(createOrderReq);
+            String r = apiClient.placeOrder(orderId);
+            synchronized (lock){
+                sell_order.add(priceStep);
+                sellOrder.put(orderId,priceStep);
+            }
+        }catch (Exception e){
+            logger.error("售卖流程异常 price="+priceStep+"手数:"+fillAmount,e);
         }
+
 
 
 
