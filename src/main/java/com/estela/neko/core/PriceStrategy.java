@@ -45,8 +45,6 @@ public class PriceStrategy {
 
     private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
-    private ScheduledExecutorService buyScheduleOrder = new ScheduledThreadPoolExecutor(1);
-
     ExecutorService markPool = Executors.newFixedThreadPool(10);
     ExecutorService sellForLimit = Executors.newFixedThreadPool(10);
 
@@ -76,29 +74,29 @@ public class PriceStrategy {
         tradingSchedule.scheduleWithFixedDelay(()->{
             logger.info("进行买入执行");
             checkBuyMarket();
-        },100,100,TimeUnit.MILLISECONDS);
+        },100,50,TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(()->{
-            logger.info("开始确认 sellOrder 是否成交信息");
+                logger.info("开始确认 sellOrder 是否成交信息");
 
-            sellOrder.forEach((orderId,price)->{
-                try{
-                    OrdersDetailResponse ordersDetail = apiClient
-                        .ordersDetail(String.valueOf(orderId));
-                    logger.info("确认清除订单号:"+orderId+"订单价格:"+price);
-                    String state = (String)((Map)(ordersDetail.getData())).get("state");
-                    if ("filled".equals(state)) {
-                        logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                sellOrder.forEach((orderId,price)->{
+                    try{
+                        OrdersDetailResponse ordersDetail = apiClient
+                            .ordersDetail(String.valueOf(orderId));
+                        logger.info("确认清除订单号:"+orderId+"订单价格:"+price);
+                        String state = (String)((Map)(ordersDetail.getData())).get("state");
+                        if ("filled".equals(state)) {
+                            logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
 
-                        sell_order.remove(price);
-                        price_order.remove(price-100);
+                            sell_order.remove(price);
+                            price_order.remove(price-100);
+                        }
+
+                    }catch (Exception e){
+                        logger.error("清除sellOrder 异常 订单:"+orderId,e);
                     }
 
-                }catch (Exception e){
-                    logger.error("清除sellOrder 异常 订单:"+orderId,e);
-                }
-
-            });
+                });
 
 
 
@@ -106,34 +104,7 @@ public class PriceStrategy {
 
 
             }
-        ,1000,400,TimeUnit.MILLISECONDS);
-
-
-        buyScheduleOrder.scheduleAtFixedRate(()->{
-          buyerOrder.forEach((orderId,price)->{
-
-              try{
-                  OrdersDetailResponse ordersDetail = apiClient
-                      .ordersDetail(String.valueOf(orderId));
-                  logger.info("确认买单:"+orderId+"订单价格:"+price);
-                  String state = (String)((Map)(ordersDetail.getData())).get("state");
-                  if ("filled".equals(state)) {
-                      logger.info("买单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-
-                      sell(price+step);
-
-                  }
-
-              }catch (Exception e){
-                  logger.error("清除sellOrder 异常 订单:"+orderId,e);
-              }
-
-
-
-
-          });
-
-        },1000,200,TimeUnit.MILLISECONDS);
+            ,1000,400,TimeUnit.MILLISECONDS);
 
     }
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
@@ -141,7 +112,6 @@ public class PriceStrategy {
     public Set<Integer> fullBuy_order = Collections.synchronizedSet(new HashSet());
     //存储 order  和售卖价格  当确定售卖后 清除 price_order 以及sell_order
     public ConcurrentHashMap<Long,Integer> sellOrder = new ConcurrentHashMap();
-    public ConcurrentHashMap<Long,Integer> buyerOrder = new ConcurrentHashMap();
 
     public Object lock = new Object();
 
@@ -152,7 +122,7 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final String amount ="0.1";
+    public static final double amount =0.1;
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
@@ -171,59 +141,56 @@ public class PriceStrategy {
         }
 
     }
-    public  void buyMarket(int price) {
-            logger.info("进入buyMarket 购买价格:" + price);
-            synchronized (lock){
-                if (!sell_order.contains(price + step) && !price_order.contains(price)){
+    public synchronized void buyMarket(int price) {
+        logger.info("进入buyMarket 购买价格:" + price);
+        synchronized(lock){
+            if (!sell_order.contains(price + step) && !price_order.contains(price)) {
+                try {
+                    lastBuyPrice = price;
+                    cash -= lastBuyPrice * amount;
 
-                    try {
-                        lastBuyPrice = price;
-                        cash -= lastBuyPrice * Double.parseDouble(amount);
+                    price_order.add(price);
 
-                        price_order.add(price);
+                    AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+                    Accounts account = accounts.getData().get(0);
+                    long accountId = account.getId();
+                    // create order:
+                    CreateOrderRequest createOrderReq = new CreateOrderRequest();
+                    createOrderReq.accountId = String.valueOf(accountId);
+                    createOrderReq.amount =String.valueOf(amount);
 
-                        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-                        Accounts account = accounts.getData().get(0);
-                        long accountId = account.getId();
-                        // create order:
-                        CreateOrderRequest createOrderReq = new CreateOrderRequest();
-                        createOrderReq.accountId = String.valueOf(accountId);
-                        createOrderReq.amount = String.valueOf(amount);
-                        // createOrderReq.price = Double.toString((double) price / 10000);
-                        createOrderReq.symbol = "htusdt";
-                        createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
-                        createOrderReq.source = "api";
-                        // -------------------------------------------------------
-                        long orderId = apiClient.createOrder(createOrderReq);
-                        // place order:
+                    createOrderReq.symbol = "htusdt";
+                    createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
+                    createOrderReq.source = "api";
+                    // -------------------------------------------------------
+                    long orderId = apiClient.createOrder(createOrderReq);
+                    // place order:
 
-                        // ------------------------------------------------------ 执行订单
-                        // -------------------------------------------------------
-                        String r = apiClient.placeOrder(orderId);
-                        logger.info("买单成功返回值:"+ r);
-                        OrdersDetailResponse ordersDetail = apiClient
-                            .ordersDetail(String.valueOf(orderId));
-                        String state = (String) ((Map) (ordersDetail.getData())).get("state");
-                        if ("filled".equals(state)) {
+                    // ------------------------------------------------------ 执行订单
+                    // -------------------------------------------------------
+                    String r = apiClient.placeOrder(orderId);
+                    logger.info("买单成功返回值:"+ r);
+                    OrdersDetailResponse ordersDetail = apiClient
+                        .ordersDetail(String.valueOf(orderId));
+                    String state = (String) ((Map) (ordersDetail.getData())).get("state");
+                    if ("filled".equals(state)) {
 
-                            sell(price+step);
+                        sell(price+step);
 
-                        }else {
-                            logger.error("购买价格:"+price+"买单未全部成交");
-                            buyerOrder.put(orderId,price);
-
-                        }
-
-
-
-                    } catch (Exception e) {
-                        logger.error("挂空单异常",e);
+                    }else {
+                        logger.error("购买价格:"+price+"买单失败");
+                        price_order.remove(price);
                     }
+
+
+
+                } catch (Exception e) {
+                    logger.error("挂空单异常",e);
                 }
-
-
-
             }
+        }
+
+
 
 
     }
@@ -236,7 +203,7 @@ public class PriceStrategy {
         CreateOrderRequest createOrderReq = new CreateOrderRequest();
         createOrderReq.accountId = String.valueOf(accountId);
         createOrderReq.amount = String.valueOf(amount);
-        createOrderReq.price = String.valueOf((double)priceStep/10000);
+        createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
         createOrderReq.symbol = "htusdt";
         createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
         createOrderReq.source = "api";
@@ -260,6 +227,7 @@ public class PriceStrategy {
      * @return
      */
     public boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
+        double lot = amount;
         int result = currentPrice-zhengdianPrice;
         int diff = strategyStatus.getDiffPrice();
         if(currentPrice==0){
@@ -285,81 +253,81 @@ public class PriceStrategy {
     /**
      * 如果刷新程序没有停止, 则以每500毫秒刷新一次最近的价格字段
 
-    public void startReflashPrice() {
-        if (!scheduleReflash.isShutdown()) {
-            scheduleReflash.scheduleWithFixedDelay(() -> {
-                logger.info("开始执行价格刷新策略");
-                if (!accountModel.hasAccountKey()) {
-                    return;
-                }
+     public void startReflashPrice() {
+     if (!scheduleReflash.isShutdown()) {
+     scheduleReflash.scheduleWithFixedDelay(() -> {
+     logger.info("开始执行价格刷新策略");
+     if (!accountModel.hasAccountKey()) {
+     return;
+     }
 
-                BigDecimal currentPrice = httpHelper.getPrice(accountModel.getApiKey());
-                if (currentPrice == null) {
-                    logger.error("刷新价格失败");
-                }
-                priceMemery.reflashPrice(currentPrice);
-                markPool.execute(()->{
-                    logger.info("自动交易开始执行");
-                    autoMartket(priceMemery.getCurrentPrice());
+     BigDecimal currentPrice = httpHelper.getPrice(accountModel.getApiKey());
+     if (currentPrice == null) {
+     logger.error("刷新价格失败");
+     }
+     priceMemery.reflashPrice(currentPrice);
+     markPool.execute(()->{
+     logger.info("自动交易开始执行");
+     autoMartket(priceMemery.getCurrentPrice());
 
-                });
-            }, 100, 500, TimeUnit.MILLISECONDS);
-        }
-
-
+     });
+     }, 100, 500, TimeUnit.MILLISECONDS);
+     }
 
 
-    }
-  */
+
+
+     }
+     */
     /**
      * 自动进行验证交易
      * @Param currentPrice  应该乘以10000的价格
 
     private void autoMartket( BigDecimal currentPrice){
 
-        if (currentPrice == null) {
-            logger.warn("获取不到当前价格,执行订单处理失败");
-            return;
-        }
+    if (currentPrice == null) {
+    logger.warn("获取不到当前价格,执行订单处理失败");
+    return;
+    }
 
-        BigDecimal riskPrice = strategyStatus.getRiskPrice();
-        if (riskPrice.compareTo(currentPrice) > 0) {
-            logger.warn("当前价格超过风险设定阈值,停止买入交易 当前价格:" + currentPrice + ",阈值价格:" + riskPrice);
-            return;
-        }
-        logger.info("自动行情交易,当前市价:"+ currentPrice.intValue()  + " 当前是否满足准入:"+( currentPrice.intValue()%strategyStatus.getFluctuation()==0));
-        if (strategyStatus.getStartOrder() != null &&  strategyStatus.isSatisfyTrading(currentPrice.intValue(),strategyStatus.getStartOrder().intValue())) {
-            logger.info("执行第一次StartOrder: 当前价格:"+currentPrice.intValue());
-            //指定开始执行交易价格,如果没有这个交易价格则等待
-            BigDecimal price = strategyStatus.getStartOrder();
-            strategyStatus.setStartOrder(null);
-            buyOrder(price);
+    BigDecimal riskPrice = strategyStatus.getRiskPrice();
+    if (riskPrice.compareTo(currentPrice) > 0) {
+    logger.warn("当前价格超过风险设定阈值,停止买入交易 当前价格:" + currentPrice + ",阈值价格:" + riskPrice);
+    return;
+    }
+    logger.info("自动行情交易,当前市价:"+ currentPrice.intValue()  + " 当前是否满足准入:"+( currentPrice.intValue()%strategyStatus.getFluctuation()==0));
+    if (strategyStatus.getStartOrder() != null &&  strategyStatus.isSatisfyTrading(currentPrice.intValue(),strategyStatus.getStartOrder().intValue())) {
+    logger.info("执行第一次StartOrder: 当前价格:"+currentPrice.intValue());
+    //指定开始执行交易价格,如果没有这个交易价格则等待
+    BigDecimal price = strategyStatus.getStartOrder();
+    strategyStatus.setStartOrder(null);
+    buyOrder(price);
 
-        } else {
-            //直接将当前价格作为基准价格
-            if (priceMemery.noAnyTradeOrder() && currentPrice.intValue()%strategyStatus.getFluctuation()==0) {
-                logger.info("以基准价格执行作为价格原型 (100) : 当前价格:"+currentPrice.intValue());
-                buyOrder(currentPrice);
-            } else {
+    } else {
+    //直接将当前价格作为基准价格
+    if (priceMemery.noAnyTradeOrder() && currentPrice.intValue()%strategyStatus.getFluctuation()==0) {
+    logger.info("以基准价格执行作为价格原型 (100) : 当前价格:"+currentPrice.intValue());
+    buyOrder(currentPrice);
+    } else {
 
-                if (priceMemery.currentHandleOrder() >= strategyStatus.getMaxOrderSize()) {
-                    logger.warn("当前持有单数达到最大持单水位 停止多单交易 maxOrderSize:" + strategyStatus.getMaxOrderSize());
-                    return;
-                }
-                int lastPrice = priceMemery.getPreOrderPrice();
-                //如果当前价格满足交易点数策略  并且满足同一位置只有一个多单  才能执行交易
-                if(strategyStatus.isSatisfyTrading(currentPrice.intValue(),lastPrice) && !priceMemery.hasSameOrder(currentPrice.intValue())){
+    if (priceMemery.currentHandleOrder() >= strategyStatus.getMaxOrderSize()) {
+    logger.warn("当前持有单数达到最大持单水位 停止多单交易 maxOrderSize:" + strategyStatus.getMaxOrderSize());
+    return;
+    }
+    int lastPrice = priceMemery.getPreOrderPrice();
+    //如果当前价格满足交易点数策略  并且满足同一位置只有一个多单  才能执行交易
+    if(strategyStatus.isSatisfyTrading(currentPrice.intValue(),lastPrice) && !priceMemery.hasSameOrder(currentPrice.intValue())){
 
-                    if(!priceMemery.hasSameOrder(fillPrice(currentPrice.intValue(),lastPrice))){
-                        buyOrder(new BigDecimal(fillPrice(currentPrice.intValue(),lastPrice)));
-                    }
-                }else{
-                    logger.info("当前价格不满足准入模型 价格:"+currentPrice.intValue() +" 上次交易价格:"+lastPrice +"当前持单价格:"+priceMemery.getOrderLists());
-                }
+    if(!priceMemery.hasSameOrder(fillPrice(currentPrice.intValue(),lastPrice))){
+    buyOrder(new BigDecimal(fillPrice(currentPrice.intValue(),lastPrice)));
+    }
+    }else{
+    logger.info("当前价格不满足准入模型 价格:"+currentPrice.intValue() +" 上次交易价格:"+lastPrice +"当前持单价格:"+priceMemery.getOrderLists());
+    }
 
-            }
+    }
 
-        }
+    }
 
     }  */
 
@@ -397,65 +365,65 @@ public class PriceStrategy {
     private void buyOrder(final BigDecimal price) {
 
 
-        //添加最新购买价格
-        priceMemery.addOrder(price);
-        double lotSize = strategyStatus.getLotSize();
+    //添加最新购买价格
+    priceMemery.addOrder(price);
+    double lotSize = strategyStatus.getLotSize();
 
-        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-        Accounts account = accounts.getData().get(0);
-        long accountId = account.getId();
-        // create order:
-        CreateOrderRequest createOrderReq = new CreateOrderRequest();
-        createOrderReq.accountId = String.valueOf(accountId);
-        createOrderReq.amount = Double.toString(lotSize* ( price.divide(new BigDecimal(10000)).doubleValue()) );
+    AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+    Accounts account = accounts.getData().get(0);
+    long accountId = account.getId();
+    // create order:
+    CreateOrderRequest createOrderReq = new CreateOrderRequest();
+    createOrderReq.accountId = String.valueOf(accountId);
+    createOrderReq.amount = Double.toString(lotSize* ( price.divide(new BigDecimal(10000)).doubleValue()) );
 
-        createOrderReq.symbol = "htusdt";
-        createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
-        createOrderReq.source = "api";
+    createOrderReq.symbol = "htusdt";
+    createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
+    createOrderReq.source = "api";
 
-        // ------------------------------------------------------ 创建订单
-        // -------------------------------------------------------
-        long orderId = apiClient.createOrder(createOrderReq);
-        // place order:
+    // ------------------------------------------------------ 创建订单
+    // -------------------------------------------------------
+    long orderId = apiClient.createOrder(createOrderReq);
+    // place order:
 
-        // ------------------------------------------------------ 执行订单
-        // -------------------------------------------------------
-        final String r = apiClient.placeOrder(orderId);
-        logger.info("执行多单:" + createOrderReq + "结果:" + r);
-
-
-        buyAccessPool.execute(()->{
-              final int buyPrice= price.intValue();
-              boolean tradeOver = false;
-              int sellPrice = buyPrice  + strategyStatus.getFluctuation();
+    // ------------------------------------------------------ 执行订单
+    // -------------------------------------------------------
+    final String r = apiClient.placeOrder(orderId);
+    logger.info("执行多单:" + createOrderReq + "结果:" + r);
 
 
-              while(!tradeOver){
-                  try {
-                      OrdersDetailResponse ordersDetail = apiClient
-                          .ordersDetail(String.valueOf(orderId));
-                      String state = (String) ((Map) (ordersDetail.getData())).get("state");
-                      if ("filled".equals(state)) {
-                          logger.info("多单，订单号:" + orderId + ",完全成交");
-
-                          String amount = (String) ((Map) (ordersDetail.getData()))
-                              .get("field-amount");
-                          logger.info("准备挂空单，售出价格:" + sellPrice + " ,数量: " + amount);
-
-                          sell(sellPrice, amount);
-                          priceMemery.cleanPrice(buyPrice);
-                          tradeOver = true;
-                      }
-                      Thread.sleep(500);
-                  } catch (Exception e) {
-                      logger.error("轮训验证多单信息异常: 订单号:"+orderId+",买入价格:"+buyPrice,e);
-                  }
-              }
+    buyAccessPool.execute(()->{
+    final int buyPrice= price.intValue();
+    boolean tradeOver = false;
+    int sellPrice = buyPrice  + strategyStatus.getFluctuation();
 
 
+    while(!tradeOver){
+    try {
+    OrdersDetailResponse ordersDetail = apiClient
+    .ordersDetail(String.valueOf(orderId));
+    String state = (String) ((Map) (ordersDetail.getData())).get("state");
+    if ("filled".equals(state)) {
+    logger.info("多单，订单号:" + orderId + ",完全成交");
+
+    String amount = (String) ((Map) (ordersDetail.getData()))
+    .get("field-amount");
+    logger.info("准备挂空单，售出价格:" + sellPrice + " ,数量: " + amount);
+
+    sell(sellPrice, amount);
+    priceMemery.cleanPrice(buyPrice);
+    tradeOver = true;
+    }
+    Thread.sleep(500);
+    } catch (Exception e) {
+    logger.error("轮训验证多单信息异常: 订单号:"+orderId+",买入价格:"+buyPrice,e);
+    }
+    }
 
 
-        });
+
+
+    });
 
 
     }  */
@@ -466,52 +434,52 @@ public class PriceStrategy {
      * @param amount
 
     private void sell(final int price, String amount){
-        String truePrice = Double.toString((double) price / 10000);
+    String truePrice = Double.toString((double) price / 10000);
 
-        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-        Accounts account = accounts.getData().get(0);
-        long accountId = account.getId();
-        CreateOrderRequest createOrderReq = new CreateOrderRequest();
-        createOrderReq.accountId = String.valueOf(accountId);
-        createOrderReq.amount = String.valueOf(strategyStatus.getLotSize());
-        createOrderReq.price = truePrice;
-        createOrderReq.symbol = "htusdt";
-        createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
-        createOrderReq.source = "api";
+    AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+    Accounts account = accounts.getData().get(0);
+    long accountId = account.getId();
+    CreateOrderRequest createOrderReq = new CreateOrderRequest();
+    createOrderReq.accountId = String.valueOf(accountId);
+    createOrderReq.amount = String.valueOf(strategyStatus.getLotSize());
+    createOrderReq.price = truePrice;
+    createOrderReq.symbol = "htusdt";
+    createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
+    createOrderReq.source = "api";
 
-        // ------------------------------------------------------ 创建订单
-        // -------------------------------------------------------
-        long orderId = apiClient.createOrder(createOrderReq);
+    // ------------------------------------------------------ 创建订单
+    // -------------------------------------------------------
+    long orderId = apiClient.createOrder(createOrderReq);
 
-        // ------------------------------------------------------ 执行订单
-        // -------------------------------------------------------
-        String r = apiClient.placeOrder(orderId);
-        logger.info("执行挂空单:" + createOrderReq + "结果:" + r);
-        priceMemery.sellOrder(new BigDecimal(price));
-        //验证空单结果
-        sellAccessPool.execute(()->{
-            boolean sellSuccess = false;
+    // ------------------------------------------------------ 执行订单
+    // -------------------------------------------------------
+    String r = apiClient.placeOrder(orderId);
+    logger.info("执行挂空单:" + createOrderReq + "结果:" + r);
+    priceMemery.sellOrder(new BigDecimal(price));
+    //验证空单结果
+    sellAccessPool.execute(()->{
+    boolean sellSuccess = false;
 
-            while(!sellSuccess){
-                try{
+    while(!sellSuccess){
+    try{
 
-                    OrdersDetailResponse ordersDetail = apiClient
-                        .ordersDetail(String.valueOf(orderId));
-                    String state = (String) ((Map) (ordersDetail.getData())).get("state");
-                    if ("filled".equals(state)) {
-                        logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-                        priceMemery.cleanPrice(price);
+    OrdersDetailResponse ordersDetail = apiClient
+    .ordersDetail(String.valueOf(orderId));
+    String state = (String) ((Map) (ordersDetail.getData())).get("state");
+    if ("filled".equals(state)) {
+    logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+    priceMemery.cleanPrice(price);
 
-                        sellSuccess =true;
-                    }
-                    Thread.sleep(100);
+    sellSuccess =true;
+    }
+    Thread.sleep(100);
 
 
-                }catch (Exception e){
-                    logger.error("轮训验证空单信息异常: 订单价格:"+price+"手数"+amount,e);
-                }
-            }
-        });
+    }catch (Exception e){
+    logger.error("轮训验证空单信息异常: 订单价格:"+price+"手数"+amount,e);
+    }
+    }
+    });
     }
      */
 }
