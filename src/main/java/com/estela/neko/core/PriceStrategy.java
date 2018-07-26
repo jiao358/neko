@@ -180,7 +180,7 @@ public class PriceStrategy {
     public synchronized void buyMarket(int price) {
         logger.info("进入buyMarket 购买价格:" + price);
         synchronized(lock){
-            if (!sell_order.contains(price + step) && !price_order.contains(price)) {
+            if (!price_order.contains(price)) {
                 try {
                     lastBuyPrice = price;
                     cash -= lastBuyPrice * amount;
@@ -248,28 +248,38 @@ public class PriceStrategy {
     }
 
     public  void sell(int priceStep,String fillAmount) {
-        try{
-            logger.warn("进入售卖流程: 价格:"+priceStep+" amount:"+ fillAmount);
-            AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-            Accounts account = accounts.getData().get(0);
-            long accountId = account.getId();
-            CreateOrderRequest createOrderReq = new CreateOrderRequest();
-            createOrderReq.accountId = String.valueOf(accountId);
-            createOrderReq.amount = fillAmount;
-            createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
-            createOrderReq.symbol = "htusdt";
-            createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
-            createOrderReq.source = "api";
 
-            long orderId = apiClient.createOrder(createOrderReq);
-            String r = apiClient.placeOrder(orderId);
-            synchronized (lock){
-                sell_order.add(priceStep);
-                sellOrder.put(orderId,priceStep);
+
+        synchronized (lock){
+            try{
+                if(sell_order.contains(priceStep)){
+                    logger.warn("已经含有这个单子价格:"+priceStep);
+                    return;
+                }
+
+                logger.warn("进入售卖流程: 价格:"+priceStep+" amount:"+ fillAmount);
+                AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
+                Accounts account = accounts.getData().get(0);
+                long accountId = account.getId();
+                CreateOrderRequest createOrderReq = new CreateOrderRequest();
+                createOrderReq.accountId = String.valueOf(accountId);
+                createOrderReq.amount = fillAmount;
+                createOrderReq.price = Double.valueOf((double)priceStep/10000.0).toString();
+                createOrderReq.symbol = "htusdt";
+                createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
+                createOrderReq.source = "api";
+
+                long orderId = apiClient.createOrder(createOrderReq);
+                String r = apiClient.placeOrder(orderId);
+
+                    sell_order.add(priceStep);
+                    sellOrder.put(orderId,priceStep);
+
+            }catch (Exception e){
+                logger.error("售卖流程异常 price="+priceStep+"手数:"+fillAmount,e);
             }
-        }catch (Exception e){
-            logger.error("售卖流程异常 price="+priceStep+"手数:"+fillAmount,e);
         }
+
 
 
 
