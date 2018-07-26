@@ -158,7 +158,7 @@ public class PriceStrategy {
     int step = 100;
 
     public static int cash = 0 * 10000;
-    public static final double amount =0.1;
+    public static final double amount =1.0;
     public synchronized void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
         int price = currentAppPrice / step * step;
