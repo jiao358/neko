@@ -20,8 +20,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author fuming.lj 2018/7/23
@@ -111,6 +110,15 @@ public class TradeSerivce {
             .ordersDetail(String.valueOf(orderId));
         return JSONObject.toJSON(ordersDetail);
 
+
+    }
+    @RequestMapping("/priceInfo")
+    public Object getPriceInfo(){
+        Map map =new HashMap();
+
+        map.put("price_order:",JSONObject.toJSON(priceStrategy.price_order));
+        map.put("sell_order:",JSONObject.toJSON(priceStrategy.sell_order));
+   return JSONObject.toJSON(map);
 
     }
 
