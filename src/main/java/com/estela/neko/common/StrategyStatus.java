@@ -17,7 +17,9 @@ public class StrategyStatus {
     /**
      * 需要是乘以10000的价格
      */
-    private BigDecimal riskPrice = new BigDecimal(0);
+    private int highriskPrice = 99999;
+
+    private int lowRisiPrice=  0 ;
 
     private BigDecimal money;
 
@@ -30,7 +32,6 @@ public class StrategyStatus {
      */
     private double lotSize = 1.0;
 
-
     public int getMaxOrderSize() {
         return maxOrderSize;
     }
@@ -42,50 +43,44 @@ public class StrategyStatus {
     /**
      * 计算误差  3个点以内
      */
-    private int diffPrice =5;
+    private int diffPrice = 5;
     /**
      * 已经完成的卖单
      */
-    private AtomicInteger completeTrade= new AtomicInteger();
+    private AtomicInteger completeTrade = new AtomicInteger();
     /**
      * 浮动交易点数
      */
-    private Integer fluctuation =100;
+    private Integer fluctuation = 100;
 
     /**
      * 起始执行价格  会以这个价格为基础 向上 或者向下增加 浮动交易点数策略
      */
-    private BigDecimal startOrder  =null;
+    private BigDecimal startOrder = null;
 
     private String sysMsg;
-
-
-
-
 
     /**
      * 判断当前价格是否 满足交易策略
      *
-     * @param currentPrice  当前价格
+     * @param currentPrice 当前价格
      * @param lastPrice    最近一次交易价格
      * @return
      */
-    public boolean isSatisfyTrading (int currentPrice, int lastPrice) {
+    public boolean isSatisfyTrading(int currentPrice, int lastPrice) {
         int lot = diffPrice;
-        int result = (currentPrice -lastPrice)%100;
-        if(result<0 &&  ((result+100)<=lot || result >= (-1*lot))){
+        int result = (currentPrice - lastPrice) % 100;
+        if (result < 0 && ((result + 100) <= lot || result >= (-1 * lot))) {
             System.out.println("在范围内 负值");
             return true;
         }
-        if(result>=0 && (result<=lot || result -100 >=(-1*lot)) ){
+        if (result >= 0 && (result <= lot || result - 100 >= (-1 * lot))) {
             System.out.println("在范围内");
             return true;
         }
 
         return false;
     }
-
-
 
     public int getDiffPrice() {
         return diffPrice;
@@ -143,13 +138,7 @@ public class StrategyStatus {
         this.tradingPosition = tradingPosition;
     }
 
-    public BigDecimal getRiskPrice() {
-        return riskPrice;
-    }
 
-    public void setRiskPrice(BigDecimal riskPrice) {
-        this.riskPrice = riskPrice;
-    }
 
     public BigDecimal getMemory() {
         return money;
@@ -159,12 +148,11 @@ public class StrategyStatus {
         this.money = memory;
     }
 
-
-    public void completeTrade(){
+    public void completeTrade() {
         completeTrade.incrementAndGet();
     }
 
-    public int getCompleteTrade(){
+    public int getCompleteTrade() {
         return completeTrade.get();
     }
 
@@ -174,5 +162,25 @@ public class StrategyStatus {
 
     public void setLotSize(double lotSize) {
         this.lotSize = lotSize;
+    }
+
+    public int getHighriskPrice() {
+        return highriskPrice;
+    }
+
+    public void setHighriskPrice(int highriskPrice) {
+        this.highriskPrice = highriskPrice;
+    }
+
+    public int getLowRisiPrice() {
+        return lowRisiPrice;
+    }
+
+    public void setLowRisiPrice(int lowRisiPrice) {
+        this.lowRisiPrice = lowRisiPrice;
+    }
+
+    public void setCompleteTrade(AtomicInteger completeTrade) {
+        this.completeTrade = completeTrade;
     }
 }

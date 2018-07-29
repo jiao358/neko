@@ -1,6 +1,5 @@
 package com.estela.neko.core;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
@@ -20,7 +19,9 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author fuming.lj 2018/7/23
@@ -41,32 +42,33 @@ public class TradeSerivce {
     @Autowired
     ApiClient apiClient;
 
-
-
     @RequestMapping("/price")
     public Object getPrice() throws Exception {
 
-        Object ob=helper.get("https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId="+"a7fd725a-502746cd-69b903fd-4418a");
+        Object ob = helper.get(
+            "https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=" + "a7fd725a-502746cd-69b903fd-4418a");
         return ob;
 
-
     }
-    URLConnection connection ;
+
+    URLConnection connection;
+
     @RequestMapping("/price2")
     public Object getPrice2() throws Exception {
         String result = "";
         BufferedReader in = null;
         long beginTime = System.currentTimeMillis();
         try {
-            String urlNameString ="https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=a7fd725a-502746cd-69b903fd-4418a";
+            String urlNameString
+                = "https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=a7fd725a-502746cd-69b903fd-4418a";
             URL realUrl = new URL(urlNameString);
             // if ("https".equalsIgnoreCase(realUrl.getProtocol())) {
             // ignoreSsl();
             // }
             // 打开和URL之间的连接
 
-            if(connection==null){
-               connection = realUrl.openConnection();
+            if (connection == null) {
+                connection = realUrl.openConnection();
                 // 设置通用的请求属性
                 connection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
                 connection.setRequestProperty("user-agent",
@@ -77,7 +79,6 @@ public class TradeSerivce {
                 connection.setConnectTimeout(500);
                 connection.connect();
             }
-
 
             // 获取所有响应头字段
             Map<String, List<String>> map = connection.getHeaderFields();
@@ -99,113 +100,109 @@ public class TradeSerivce {
             }
         }
 
-
-        return result+ "\\n"+ (System.currentTimeMillis()-beginTime);
+        return result + "\\n" + (System.currentTimeMillis() - beginTime);
 
     }
+
     @RequestMapping("/order")
-    public Object getOrder(Long orderId){
+    public Object getOrder(Long orderId) {
 
         OrdersDetailResponse ordersDetail = apiClient
             .ordersDetail(String.valueOf(orderId));
         return JSONObject.toJSON(ordersDetail);
 
-
     }
+
     @RequestMapping("/priceInfo")
-    public Object getPriceInfo(){
-        Map map =new HashMap();
+    public Object getPriceInfo() {
+        Map map = new HashMap();
 
-        map.put("price_order:",JSONObject.toJSON(priceStrategy.price_order));
-        map.put("sell_order:",JSONObject.toJSON(priceStrategy.sell_order));
-   return JSONObject.toJSON(map);
+        map.put("price_order:", JSONObject.toJSON(priceStrategy.price_order));
+        map.put("sell_order:", JSONObject.toJSON(priceStrategy.sell_order));
+        return JSONObject.toJSON(map);
 
     }
+
     @RequestMapping("/setAmount")
-    public Object setAmount(String amount){
-        PriceStrategy.amount=Double.parseDouble(amount);
-        return PriceStrategy.amount;
+    public Object setAmount(String amount) {
+        return "";
     }
 
     @RequestMapping("/setProperties")
-    public StrategyStatus setProperties(String riskPrice,String maxOrderSize ,String lotSize ,String diffPrice){
-        try{
-            if(!StringUtils.isEmpty(riskPrice)){
+    public StrategyStatus setProperties(String highriskPrice, String maxOrderSize, String lotSize, String diffPrice,
+                                        String lowPrice) {
+        try {
+            if (!StringUtils.isEmpty(highriskPrice)) {
                 //乘以10000 以上
-                tradeStatus.setRiskPrice(new BigDecimal(riskPrice));
+                tradeStatus.setHighriskPrice(new BigDecimal(highriskPrice));
             }
-            if(!StringUtils.isEmpty(maxOrderSize)){
+
+            if (!StringUtils.isEmpty(lowPrice)) {
+                //乘以10000 以上
+                tradeStatus.setHighriskPrice(new BigDecimal(lowPrice));
+            }
+
+            if (!StringUtils.isEmpty(maxOrderSize)) {
 
                 tradeStatus.setMaxOrderSize(Integer.valueOf(maxOrderSize));
             }
-            if(!StringUtils.isEmpty(lotSize)){
+            if (!StringUtils.isEmpty(lotSize)) {
 
                 tradeStatus.setLotSize(Double.valueOf(lotSize));
             }
 
-            if(!StringUtils.isEmpty(diffPrice)){
+            if (!StringUtils.isEmpty(diffPrice)) {
 
                 tradeStatus.setDiffPrice(Integer.valueOf(diffPrice));
             }
 
-
-
-        }catch (Exception e){
-            logger.error("设置参数错误",e);
+        } catch (Exception e) {
+            logger.error("设置参数错误", e);
             tradeStatus.setSysMsg("设置参数非法");
         }
-
-
-
 
         return tradeStatus;
     }
 
     @RequestMapping("/look")
-    public StrategyStatus queryStatus(){
+    public StrategyStatus queryStatus() {
         return tradeStatus;
     }
 
-
     @RequestMapping("/go")
-    public StrategyStatus go(String startOrder){
-        if(!StringUtils.isEmpty(startOrder)){
+    public StrategyStatus go(String startOrder) {
+        if (!StringUtils.isEmpty(startOrder)) {
             tradeStatus.setStartOrder(new BigDecimal(startOrder));
         }
-        accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a","5774a589-a4b36db6-382fdc6f-6bbae");
-
+        accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
         tradeStatus.setTrading(true);
-        //priceStrategy.startReflashPrice();
-        priceStrategy.startTradePrice();
+        priceStrategy.execute();
 
         return tradeStatus;
     }
 
     @RequestMapping("/start")
-    public StrategyStatus start(@RequestParam(required = true) String accessKey, @RequestParam(required = true)String securityKey, BigDecimal startOrderPrice){
-        if(StringUtils.isEmpty(accessKey)|| StringUtils.isEmpty(securityKey)){
+    public StrategyStatus start(@RequestParam(required = true) String accessKey,
+                                @RequestParam(required = true) String securityKey, BigDecimal startOrderPrice) {
+        if (StringUtils.isEmpty(accessKey) || StringUtils.isEmpty(securityKey)) {
             tradeStatus.setSysMsg("输入参数异常,请检查重试");
-            logger.error("输入参数有误:"+accessKey+":"+accessKey+",securityKey:"+securityKey);
+            logger.error("输入参数有误:" + accessKey + ":" + accessKey + ",securityKey:" + securityKey);
             return tradeStatus;
         }
-        if(tradeStatus.getTrading()){
+        if (tradeStatus.getTrading()) {
             logger.info("系统已经启动");
             return tradeStatus;
         }
         tradeStatus.setStartOrder(startOrderPrice);
-        accountModel.setKey(accessKey,securityKey);
+        accountModel.setKey(accessKey, securityKey);
         tradeStatus.setTrading(true);
         //priceStrategy.startReflashPrice();
-
-
-
 
         return tradeStatus;
     }
 
-
     @RequestMapping("/api")
-    public String helloWorld(){
+    public String helloWorld() {
         return " hello world ";
     }
 }
