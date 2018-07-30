@@ -4,6 +4,7 @@ import com.estela.neko.api.NetTradeService;
 import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
+import com.estela.neko.config.Diamond;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.response.Accounts;
@@ -165,7 +166,7 @@ public class PriceStrategy implements NetTradeService{
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
                 logger.info("满足准入条件");
 
-                if(!isOverHandLimit()){
+                if(!isOverHandLimit() && Diamond.canRunning){
                     buyMarket(price);
                 }
 

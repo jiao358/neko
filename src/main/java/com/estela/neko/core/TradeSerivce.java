@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
+import com.estela.neko.config.Diamond;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
 import org.slf4j.Logger;
@@ -134,12 +135,12 @@ public class TradeSerivce {
         try {
             if (!StringUtils.isEmpty(highriskPrice)) {
                 //乘以10000 以上
-                tradeStatus.setHighriskPrice(new BigDecimal(highriskPrice));
+                tradeStatus.setHighriskPrice(Integer.parseInt(highriskPrice));
             }
 
             if (!StringUtils.isEmpty(lowPrice)) {
                 //乘以10000 以上
-                tradeStatus.setHighriskPrice(new BigDecimal(lowPrice));
+                tradeStatus.setHighriskPrice(Integer.parseInt(lowPrice));
             }
 
             if (!StringUtils.isEmpty(maxOrderSize)) {
@@ -177,6 +178,31 @@ public class TradeSerivce {
         accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
         tradeStatus.setTrading(true);
         priceStrategy.execute();
+
+        return tradeStatus;
+    }
+
+    /**
+     * 暂停执行 当前价格服务
+     * @return
+     */
+    @RequestMapping("/stopPriceService")
+    public StrategyStatus stopPriceService() {
+
+        Diamond.canRunning=false;
+
+        return tradeStatus;
+    }
+
+
+    /**
+     * 恢复执行 当前价格服务
+     * @return
+     */
+    @RequestMapping("/stopPriceService")
+    public StrategyStatus startPriceService() {
+
+        Diamond.canRunning=true;
 
         return tradeStatus;
     }
