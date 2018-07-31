@@ -72,7 +72,7 @@ public class PriceUtil {
         }
 
         if(Diamond.floatStrategy.equals(FloatEnu.ALL_FLOAT)){
-            if(result<0 && result<= (-1*diff)){
+            if(result<=0 && result>= (-1*diff)){
                 return true;
             }
             if(result>=0 && result<=diff){
@@ -81,7 +81,7 @@ public class PriceUtil {
         }
 
         if(Diamond.floatStrategy.equals(FloatEnu.DOWN_FLOAT)){
-            if(result<0 && result<= (-1*diff)){
+            if(result<=0 && result>= (-1*diff)){
                 return true;
             }
         }
