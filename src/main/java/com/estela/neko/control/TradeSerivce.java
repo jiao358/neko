@@ -1,10 +1,12 @@
-package com.estela.neko.core;
+package com.estela.neko.control;
 
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.AccountModel;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.config.Diamond;
+import com.estela.neko.core.PriceStrategy;
+import com.estela.neko.domain.Result;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
 import org.slf4j.Logger;
@@ -52,58 +54,29 @@ public class TradeSerivce {
 
     }
 
-    URLConnection connection;
-
-    @RequestMapping("/price2")
-    public Object getPrice2() throws Exception {
-        String result = "";
-        BufferedReader in = null;
-        long beginTime = System.currentTimeMillis();
-        try {
-            String urlNameString
-                = "https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=a7fd725a-502746cd-69b903fd-4418a";
-            URL realUrl = new URL(urlNameString);
-            // if ("https".equalsIgnoreCase(realUrl.getProtocol())) {
-            // ignoreSsl();
-            // }
-            // 打开和URL之间的连接
-
-            if (connection == null) {
-                connection = realUrl.openConnection();
-                // 设置通用的请求属性
-                connection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
-                connection.setRequestProperty("user-agent",
-                    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 "
-                        + "Safari/537.36");
-                connection.setRequestProperty("Accept-Language", "zh-cn");
-                // 建立实际的连接
-                connection.setConnectTimeout(500);
-                connection.connect();
-            }
-
-            // 获取所有响应头字段
-            Map<String, List<String>> map = connection.getHeaderFields();
-
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line;
-            while ((line = in.readLine()) != null) {
-                result += line;
-            }
+    @RequestMapping("/startSystem")
+    public synchronized Object startSystem() throws Exception {
+        Result result = new Result();
+        if(!Diamond.sysFirstRun.get()){
+            accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
+            Diamond.canRunning=true;
+            priceStrategy.execute();
+            Diamond.sysFirstRun.set(true);
+        }else{
+            Diamond.canRunning=true;
         }
-        // 使用finally块来关闭输入流
-        finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
-        }
-
-        return result + "\\n" + (System.currentTimeMillis() - beginTime);
+        return result;
 
     }
+    @RequestMapping("/stopSystem")
+    public Object stopSystem() throws Exception {
+        Result result = new Result();
+        Diamond.canRunning=false;
+        return result;
+
+    }
+
+
 
     @RequestMapping("/order")
     public Object getOrder(Long orderId) {
@@ -196,10 +169,44 @@ public class TradeSerivce {
 
 
     /**
+     * 设置交易策略
+     * @return
+     */
+    @RequestMapping("/setStrategy")
+    public Object setStrategy(String maxOrderSize,String diffPrice,String lowRisiPrice,String highriskPrice,String lotSize) {
+
+        Result result = new Result();
+        if(!Diamond.canRunning){
+            if(!StringUtils.isEmpty(maxOrderSize)){
+                tradeStatus.setMaxOrderSize(Integer.parseInt(maxOrderSize));
+            }
+
+            if(!StringUtils.isEmpty(diffPrice)){
+                tradeStatus.setDiffPrice(Integer.parseInt(diffPrice));
+            }
+            if(!StringUtils.isEmpty(lowRisiPrice)){
+                tradeStatus.setLowRisiPrice(Integer.parseInt(lowRisiPrice));
+            }
+            if(!StringUtils.isEmpty(highriskPrice)){
+                tradeStatus.setHighriskPrice(Integer.parseInt(highriskPrice));
+            }
+            if(!StringUtils.isEmpty(lotSize)){
+                tradeStatus.setLotSize(Double.parseDouble(lotSize));
+            }
+
+        }
+
+
+        return result;
+    }
+
+
+
+    /**
      * 恢复执行 当前价格服务
      * @return
      */
-    @RequestMapping("/stopPriceService")
+    @RequestMapping("/startPriceService")
     public StrategyStatus startPriceService() {
 
         Diamond.canRunning=true;

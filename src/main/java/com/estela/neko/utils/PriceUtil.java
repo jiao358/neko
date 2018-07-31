@@ -18,14 +18,14 @@ public class PriceUtil {
     private  static Logger logger = LoggerFactory.getLogger(PriceUtil.class);
 
     @Autowired
-    private static StrategyStatus strategyStatus;
+    private  StrategyStatus strategyStatus;
 
     /**
      * 补全满足策略的价格
      * @param currentPrice 当前价格
      * @return
      */
-    public static int fillPrice(int currentPrice,int lastPrice){
+    public  int fillPrice(int currentPrice,int lastPrice){
         int fluctuation =strategyStatus.getFluctuation();
 
         int aa =lastPrice/fluctuation *fluctuation;
@@ -49,7 +49,7 @@ public class PriceUtil {
      * 判断当前的价格是否超过预定阈值 或者低于预定阈值
      */
 
-    public static boolean isOverRishPriceOrLowPrice(int priceNow){
+    public  boolean isOverRishPriceOrLowPrice(int priceNow){
         if(priceNow<strategyStatus.getHighriskPrice()&& priceNow>strategyStatus.getLowRisiPrice()){
             return false;
         }else {
@@ -64,7 +64,7 @@ public class PriceUtil {
      * @param currentPrice  当前价格
      * @return
      */
-    public static boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
+    public  boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
         int result = currentPrice-zhengdianPrice;
         int diff = strategyStatus.getDiffPrice();
         if(currentPrice==0){

@@ -37,6 +37,8 @@ public class PriceStrategy implements NetTradeService{
     StrategyStatus strategyStatus;
     @Autowired
     HttpHelper httpHelper;
+    @Autowired
+    PriceUtil priceUtil;
     /**
      * 缓存accountId
      */
@@ -64,10 +66,8 @@ public class PriceStrategy implements NetTradeService{
     private int lastBuyPrice;
     private int lastSellPrice;
 
-    int step = strategyStatus.getFluctuation();
 
     public static int cash = 0 * 10000;
-    public double amount =strategyStatus.getLotSize();
 
 
 
@@ -143,7 +143,7 @@ public class PriceStrategy implements NetTradeService{
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                             filledAmount = bg.toString();
                                 buyOrder.remove(orderId);
-                            sell(price+step,filledAmount);
+                            sell(price+strategyStatus.getFluctuation(),filledAmount);
                         }
 
                     }catch (Exception e){
@@ -159,6 +159,7 @@ public class PriceStrategy implements NetTradeService{
 
     public  void checkBuyMarket() {
         int currentAppPrice = PriceMemery.priceNow;
+        int step =strategyStatus.getFluctuation();
         int price = currentAppPrice / step * step;
         boolean access =currentAppPrice==price;
         logger.info("当前价格:"+currentAppPrice+",等比价格:"+price+"是否满足准入条件:"+access);
@@ -197,7 +198,7 @@ public class PriceStrategy implements NetTradeService{
             if (!price_order.contains(price)) {
                 try {
                     lastBuyPrice = price;
-                    cash -= lastBuyPrice * amount;
+                    cash -= lastBuyPrice * strategyStatus.getLotSize();
 
                     logger.warn("加入购买清单:"+price);
                     price_order.add(price);
@@ -206,7 +207,7 @@ public class PriceStrategy implements NetTradeService{
                     // create order:
                     CreateOrderRequest createOrderReq = new CreateOrderRequest();
                     createOrderReq.accountId = String.valueOf(accountId);
-                    createOrderReq.amount =Double.toString(amount * (double) price / 10000);
+                    createOrderReq.amount =Double.toString(strategyStatus.getLotSize() * (double) price / 10000);
 
                     createOrderReq.symbol = "htusdt";
                     createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
@@ -215,7 +216,7 @@ public class PriceStrategy implements NetTradeService{
                     long orderId =apiClient.createOrder(createOrderReq);
                     String state ="";
                     synchronized (lock){
-                        if(PriceUtil.isSatisfyTrading(PriceMemery.priceNow,price) && !PriceUtil.isOverRishPriceOrLowPrice(price)){
+                        if(priceUtil.isSatisfyTrading(PriceMemery.priceNow,price) && !priceUtil.isOverRishPriceOrLowPrice(price)){
                             String r = apiClient.placeOrder(orderId);
                         }else{
                             orderId=0L;
@@ -247,7 +248,7 @@ public class PriceStrategy implements NetTradeService{
                         BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                         filledAmount = bg.toString();
 
-                        sell(price+step,filledAmount);
+                        sell(price+strategyStatus.getFluctuation(),filledAmount);
 
                     }else if("submitted".equals(state) || "partial-filled".equals(state) ) {
                         logger.info("购买价格:"+price+"订单执行中");

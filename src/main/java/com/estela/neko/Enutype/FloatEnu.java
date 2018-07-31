@@ -19,4 +19,8 @@ public enum FloatEnu {
     public void setStrategy(String strategy) {
         this.strategy = strategy;
     }
+
+    public String getValue(){
+         return strategy;
+    }
 }
