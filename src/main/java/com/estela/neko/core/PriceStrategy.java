@@ -107,6 +107,7 @@ public class PriceStrategy implements NetTradeService{
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
                             logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                                strategyStatus.completeTrade();
                                 sell_order.remove(price);
                                 price_order.remove(price-100);
                                 sellOrder.remove(orderId);

@@ -47,7 +47,7 @@ public class StrategyStatus {
     /**
      * 已经完成的卖单
      */
-    private AtomicInteger completeTrade = new AtomicInteger();
+    private AtomicInteger completeTrade = new AtomicInteger(0);
     /**
      * 浮动交易点数
      */

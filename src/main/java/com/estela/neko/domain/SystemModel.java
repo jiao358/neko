@@ -1,5 +1,7 @@
 package com.estela.neko.domain;
 
+import java.util.Set;
+
 /**
  * @author fuming.lj 2018/7/31
  * 页面展示逻辑
@@ -34,6 +36,36 @@ public class SystemModel {
      * 点差计算取舍逻辑
      */
     private String floatStrategy ;
+
+    private Set<Integer> buyOrder;
+
+    private Set<Integer> sellOrder;
+
+    private int alreadyDual;
+
+    public Set<Integer> getBuyOrder() {
+        return buyOrder;
+    }
+
+    public void setBuyOrder(Set<Integer> buyOrder) {
+        this.buyOrder = buyOrder;
+    }
+
+    public Set<Integer> getSellOrder() {
+        return sellOrder;
+    }
+
+    public void setSellOrder(Set<Integer> sellOrder) {
+        this.sellOrder = sellOrder;
+    }
+
+    public int getAlreadyDual() {
+        return alreadyDual;
+    }
+
+    public void setAlreadyDual(int alreadyDual) {
+        this.alreadyDual = alreadyDual;
+    }
 
     public int getCurrentPrice() {
         return currentPrice;

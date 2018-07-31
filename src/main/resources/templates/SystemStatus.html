@@ -32,6 +32,10 @@
                     $('#maxOrderSize').val(model.maxOrderSize);
                     $('#fluctuation').val(model.fluctuation);
 
+                    $('#buyOrder').val(model.buyOrder);
+                    $('#sellOrder').val(model.sellOrder);
+                    $('#alreadyDual').val(model.alreadyDual);
+
 
                 }
 
@@ -145,16 +149,29 @@
     </tr>
 
     <tr>
+        <td>当前持有多单点位:</td>
+        <td><input type="text" id="buyOrder" readonly="true"/></td>
+
+        <td>当前持有空单点位:</td>
+        <td><input type="text" id="sellOrder"  readonly="true"/></td>
+        <td>完全成交量:</td>
+        <td><input type="text" id="alreadyDual"  readonly="true"/></td>
+
+    </tr>
+
+    <tr>
         <td><button type="button" onclick="startSystem()">启动交易系统</button></td>
         <td><button type="button" onclick="stopSystem()">暂停交易系统</button></td>
     </tr>
 
-    <tr>------------修改交易策略网格------------</tr>
+
     <tr>
         <form id="modifyForm" action="/tradeService/setStrategy" method="post">
 
 
             <table  style="text-align:center">
+                <tr>------------修改交易策略网格------------</tr>
+
                 <tr>
                     <td>最多持有订单数：</td>
                     <td><input type="text" name="maxOrderSize"/></td>
