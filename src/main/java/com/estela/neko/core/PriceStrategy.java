@@ -113,7 +113,7 @@ public class PriceStrategy implements NetTradeService{
                                 sell_order.remove(price);
                                 price_order.remove(price-100);
                                 sellOrder.remove(orderId);
-                            executor.execute(()->{buyMarket(price-100);});
+                            executor.execute(()->{buyMarket(price);});
 
                         }
 

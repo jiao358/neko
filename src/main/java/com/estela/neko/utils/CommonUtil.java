@@ -8,8 +8,11 @@ import com.estela.neko.domain.SystemModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author fuming.lj 2018/7/31
@@ -37,8 +40,13 @@ public class CommonUtil {
         systemModel.setCurrentPrice(PriceMemery.priceNow);
         systemModel.setFloatStrategy(Diamond.floatStrategy.getValue());
         systemModel.setRunning(Diamond.canRunning?"运行中":"暂停中");
-        systemModel.setBuyOrder(priceStrategy.price_order);
-        systemModel.setSellOrder(priceStrategy.sell_order);
+        List<Integer> buyOrderList = priceStrategy.price_order.stream().collect(Collectors.toList());
+        List<Integer> sellOrderList = priceStrategy.sell_order.stream().collect(Collectors.toList());
+
+        Collections.sort(buyOrderList);
+        Collections.sort(sellOrderList);
+        systemModel.setBuyOrder(buyOrderList);
+        systemModel.setSellOrder(sellOrderList);
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());
         return systemModel;
 

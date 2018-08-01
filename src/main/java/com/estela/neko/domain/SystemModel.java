@@ -1,5 +1,6 @@
 package com.estela.neko.domain;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,25 +38,25 @@ public class SystemModel {
      */
     private String floatStrategy ;
 
-    private Set<Integer> buyOrder;
+    private List<Integer> buyOrder;
 
-    private Set<Integer> sellOrder;
+    private List<Integer> sellOrder;
 
     private int alreadyDual;
 
-    public Set<Integer> getBuyOrder() {
+    public List<Integer> getBuyOrder() {
         return buyOrder;
     }
 
-    public void setBuyOrder(Set<Integer> buyOrder) {
+    public void setBuyOrder(List<Integer> buyOrder) {
         this.buyOrder = buyOrder;
     }
 
-    public Set<Integer> getSellOrder() {
+    public List<Integer> getSellOrder() {
         return sellOrder;
     }
 
-    public void setSellOrder(Set<Integer> sellOrder) {
+    public void setSellOrder(List<Integer> sellOrder) {
         this.sellOrder = sellOrder;
     }
 
