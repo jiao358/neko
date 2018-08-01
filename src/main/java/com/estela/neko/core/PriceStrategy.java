@@ -51,6 +51,7 @@ public class PriceStrategy implements NetTradeService{
     private ScheduledExecutorService sellScheduleOrder = new ScheduledThreadPoolExecutor(1);
     private ScheduledExecutorService buyScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
+    private Executor executor = Executors.newFixedThreadPool(1);
 
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> sell_order = Collections.synchronizedSet(new HashSet());
@@ -108,9 +109,11 @@ public class PriceStrategy implements NetTradeService{
                         if ("filled".equals(state)) {
                             logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
                                 strategyStatus.completeTrade();
+
                                 sell_order.remove(price);
                                 price_order.remove(price-100);
                                 sellOrder.remove(orderId);
+                            executor.execute(()->{buyMarket(price-100);});
 
                         }
 
@@ -121,7 +124,7 @@ public class PriceStrategy implements NetTradeService{
                 });
 
             }
-            ,1000,400,TimeUnit.MILLISECONDS);
+            ,1000,50,TimeUnit.MILLISECONDS);
 
 
         buyScheduleOrder.scheduleAtFixedRate(()->{
@@ -195,9 +198,13 @@ public class PriceStrategy implements NetTradeService{
      */
     public  void buyMarket(int price) {
         logger.info("进入buyMarket 购买价格:" + price);
+        try {
+            boolean flag =false;
+            synchronized (lock){
+                flag =!price_order.contains(price);
+            }
+            if (flag) {
 
-            if (!price_order.contains(price)) {
-                try {
                     lastBuyPrice = price;
                     cash -= lastBuyPrice * strategyStatus.getLotSize();
 
@@ -216,12 +223,11 @@ public class PriceStrategy implements NetTradeService{
                     // -------------------------------------------------------
                     long orderId =apiClient.createOrder(createOrderReq);
                     String state ="";
-                    synchronized (lock){
-                        if(priceUtil.isSatisfyTrading(PriceMemery.priceNow,price) && !priceUtil.isOverRishPriceOrLowPrice(price)){
-                            String r = apiClient.placeOrder(orderId);
-                        }else{
-                            orderId=0L;
-                        }
+
+                    if(priceUtil.isSatisfyTrading(PriceMemery.priceNow,price) && !priceUtil.isOverRishPriceOrLowPrice(price)){
+                        String r = apiClient.placeOrder(orderId);
+                    }else{
+                        orderId=0L;
                     }
 
                     if(orderId==0L){
@@ -261,12 +267,12 @@ public class PriceStrategy implements NetTradeService{
 
 
 
-                } catch (Exception e) {
-                    logger.error("buymarket异常 购买失败",e);
-                }
+
             }
 
-
+        } catch (Exception e) {
+            logger.error("buymarket异常 购买失败",e);
+        }
 
 
 
