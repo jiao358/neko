@@ -83,8 +83,23 @@ public class ApiClient {
         return resp.checkAndReturn();
     }
 
-    public BalanceResponse getBalance(String accountId){
-        return get("/v1/account/accounts/" + accountId + "/balance", null, new TypeReference<BalanceResponse>() {});
+    public String getBalance(String accountId){
+        ApiSignature sign = new ApiSignature();
+        sign.createSignature(this.accessKeyId, this.accessKeySecret, "GET", API_HOST, "/v1/account/accounts/" + accountId + "/balance" , new HashMap<>());
+        try {
+            Request.Builder builder = null;
+
+                builder = new Request.Builder().url(API_URL + "/v1/account/accounts/" + accountId + "/balance" ).get();
+            if (this.assetPassword != null) {
+                builder.addHeader("AuthData", authData());
+            }
+            Request request = builder.build();
+            Response response = client.newCall(request).execute();
+            String s = response.body().string();
+            return s;
+        } catch (IOException e) {
+            throw new ApiException(e);
+        }
 
 
     }
