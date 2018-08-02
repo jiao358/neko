@@ -1,6 +1,7 @@
 package com.estela.neko.domain;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,7 +43,27 @@ public class SystemModel {
 
     private List<Integer> sellOrder;
 
+    private String buyAndOrder;
+    private String sellAndOrder;
+
+
     private int alreadyDual;
+
+    public String getBuyAndOrder() {
+        return buyAndOrder;
+    }
+
+    public void setBuyAndOrder(String buyAndOrder) {
+        this.buyAndOrder = buyAndOrder;
+    }
+
+    public String getSellAndOrder() {
+        return sellAndOrder;
+    }
+
+    public void setSellAndOrder(String sellAndOrder) {
+        this.sellAndOrder = sellAndOrder;
+    }
 
     public List<Integer> getBuyOrder() {
         return buyOrder;

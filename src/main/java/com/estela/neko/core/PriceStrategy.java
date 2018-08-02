@@ -68,6 +68,18 @@ public class PriceStrategy implements NetTradeService {
 
     public static int cash = 0 * 10000;
 
+
+    public void addSellOrder(String price,String order){
+        sellOrder.put(Long.valueOf(price),Integer.valueOf(order));
+        sell_order.add(Integer.parseInt(price));
+    }
+
+
+    public void addBuyOrder(String price,String order){
+        buyOrder.put(Long.valueOf(price),Integer.valueOf(order));
+        price_order.add(Integer.parseInt(price));
+    }
+
     /**
      * 老版本
      */

@@ -83,6 +83,12 @@ public class ApiClient {
         return resp.checkAndReturn();
     }
 
+    public BalanceResponse getBalance(String accountId){
+        return get("/v1/account/accounts/" + accountId + "/balance", null, new TypeReference<BalanceResponse>() {});
+
+
+    }
+
     /**
      * 创建订单（未执行)
      *
@@ -298,6 +304,8 @@ public class ApiClient {
           return resp;
     }
 
+
+
     /**
      * GET /v1/order/orders/{order-id} 查询某个订单详情
      *
@@ -369,8 +377,10 @@ public class ApiClient {
 //  }
 
 
+
+
     // send a GET request.
-    <T> T get(String uri, Map<String, String> params, TypeReference<T> ref) {
+    public <T> T get(String uri, Map<String, String> params, TypeReference<T> ref) {
         if (params == null) {
             params = new HashMap<>();
         }

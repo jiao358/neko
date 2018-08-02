@@ -1,5 +1,6 @@
 package com.estela.neko.utils;
 
+import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.config.Diamond;
 import com.estela.neko.core.PriceMemery;
@@ -45,6 +46,9 @@ public class CommonUtil {
 
         Collections.sort(buyOrderList);
         Collections.sort(sellOrderList);
+        systemModel.setBuyAndOrder(JSONObject.toJSONString(priceStrategy.buyOrder));
+        systemModel.setSellAndOrder(JSONObject.toJSONString(priceStrategy.sellOrder));
+
         systemModel.setBuyOrder(buyOrderList);
         systemModel.setSellOrder(sellOrderList);
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());

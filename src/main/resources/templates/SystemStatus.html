@@ -8,7 +8,6 @@
 <script>
 
 
-
     $(function () {
 
         $('#tradeStatus').val(1234);
@@ -20,8 +19,8 @@
             type: "get",
             dataType: "json",
             success: function (text) {
-                if(text.success){
-                    const model =text.model;
+                if (text.success) {
+                    const model = text.model;
                     $('#running').val(model.running);
                     $('#currentPrice').val(model.currentPrice);
                     $('#lotSize').val(model.lotSize);
@@ -35,6 +34,8 @@
                     $('#buyOrder').val(model.buyOrder);
                     $('#sellOrder').val(model.sellOrder);
                     $('#alreadyDual').val(model.alreadyDual);
+                    $('#buyAndOrder').val(model.buyAndOrder);
+                    $('#sellAndOrder').val(model.sellAndOrder);
 
 
                 }
@@ -44,7 +45,7 @@
     });
 
 
-    function startSystem(){
+    function startSystem() {
         $.ajax({
             url: "/tradeService/startSystem",
             data: {
@@ -53,12 +54,12 @@
             type: "get",
             dataType: "json",
             success: function (json) {
-                if(json.success){
+                if (json.success) {
                     alert('系统启动成功');
                     window.location.reload();
                 }
             },
-            error: function(json){
+            error: function (json) {
                 alert("系统异常,请联系关联员或者稍后重试");
             }
 
@@ -66,7 +67,7 @@
 
     }
 
-    function stopSystem(){
+    function stopSystem() {
         $.ajax({
             url: "/tradeService/stopSystem",
             data: {
@@ -75,7 +76,7 @@
             type: "get",
             dataType: "json",
             success: function (json) {
-                if(json.success) {
+                if (json.success) {
                     alert('暂停系统成功');
                     window.location.reload();
                 }
@@ -85,22 +86,22 @@
 
     }
 
-    function modeifyStrategy(){
+    function modeifyStrategy() {
         var targetUrl = $("#modifyForm").attr("action");
         var data = $("#modifyForm").serialize();
         $.ajax({
-            type:'post',
-            url:targetUrl,
+            type: 'post',
+            url: targetUrl,
             cache: false,
-            data:data,
-            dataType:'json',
-            success:function(data){
-               if(data.success){
-                   alert("修改成功");
-                   window.location.reload();
-               }
+            data: data,
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    alert("修改成功");
+                    window.location.reload();
+                }
             },
-            error:function(){
+            error: function () {
                 alert("请求失败");
             }
         })
@@ -108,107 +109,179 @@
 
     }
 
+    function initPrice(){
+
+        var targetUrl = $("#initPrice").attr("action");
+        var data = $("#initPrice").serialize();
+        $.ajax({
+            type: 'post',
+            url: targetUrl,
+            cache: false,
+            data: data,
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    alert("修改成功");
+                    window.location.reload();
+                }
+            },
+            error: function () {
+                alert("请求失败");
+            }
+        })
+
+
+
+    }
+
 </script>
 <body>
 <div style="align:center">
-<h1  >交易系统运行状态</h1>
-<table  style="text-align:center">
-    <tr>
-        <td>系统状态:</td>
-        <td><input type="text" name="状态" id="running" readonly="true" /></td>
+    <h1>交易系统运行状态</h1>
+    <table style="text-align:center">
+        <tr>
+            <td>系统状态:</td>
+            <td><input type="text" name="状态" id="running" readonly="true"/></td>
 
-        <td>当前系统交易手数:</td>
-        <td><input type="text" id="lotSize" readonly="true" /></td>
+            <td>当前系统交易手数:</td>
+            <td><input type="text" id="lotSize" readonly="true"/></td>
 
-        <td>系统最高风险控价(乘以10000):</td>
-        <td><input type="text" id="highriskPrice"  readonly="true"/></td>
+            <td>系统最高风险控价(乘以10000):</td>
+            <td><input type="text" id="highriskPrice" readonly="true"/></td>
 
-    </tr>
+        </tr>
 
-    <tr>
-        <td>系统最低风险控价:</td>
-        <td><input type="text"  id="lowRisiPrice" readonly="true"/></td>
+        <tr>
+            <td>系统最低风险控价:</td>
+            <td><input type="text" id="lowRisiPrice" readonly="true"/></td>
 
-        <td>交易允许点差:</td>
-        <td><input type="text" id="diffPrice"  readonly="true"/></td>
-
-
-        <td>最多持有订单数:</td>
-        <td><input type="text"  id="maxOrderSize"  readonly="true"/></td>
-
-    </tr>
-
-    <tr>
-        <td>点差计算取舍逻辑:</td>
-        <td><input type="text" id="floatStrategy" readonly="true" title="(当前价格-证书价格 < 0 允许买入 为down  反之为up  都有用则为all )"/></td>
-        <td>交易策略--价格间隔:</td>
-        <td><input type="text" id="fluctuation"  readonly="true"/></td>
-        <td>当前货币价格:</td>
-        <td><input type="text" id="currentPrice"  readonly="true"/></td>
-
-    </tr>
-
-    <tr>
-        <td>当前持有多单点位:</td>
-        <td><input type="text" id="buyOrder" readonly="true"/></td>
-
-        <td>当前持有空单点位:</td>
-        <td><input type="text" id="sellOrder"  readonly="true"/></td>
-        <td>完全成交量:</td>
-        <td><input type="text" id="alreadyDual"  readonly="true"/></td>
-
-    </tr>
-
-    <tr>
-        <td><button type="button" onclick="startSystem()">启动交易系统</button></td>
-        <td><button type="button" onclick="stopSystem()">暂停交易系统</button></td>
-    </tr>
+            <td>交易允许点差:</td>
+            <td><input type="text" id="diffPrice" readonly="true"/></td>
 
 
-    <tr>
-        <form id="modifyForm" action="/tradeService/setStrategy" method="post">
+            <td>最多持有订单数:</td>
+            <td><input type="text" id="maxOrderSize" readonly="true"/></td>
+
+        </tr>
+
+        <tr>
+            <td>点差计算取舍逻辑:</td>
+            <td><input type="text" id="floatStrategy" readonly="true"
+                       title="(当前价格-证书价格 < 0 允许买入 为down  反之为up  都有用则为all )"/></td>
+            <td>交易策略--价格间隔:</td>
+            <td><input type="text" id="fluctuation" readonly="true"/></td>
+            <td>当前货币价格:</td>
+            <td><input type="text" id="currentPrice" readonly="true"/></td>
+
+        </tr>
+
+        <tr>
+            <td>当前持有多单点位:</td>
+            <td><input type="text" id="buyOrder" readonly="true"/></td>
+
+            <td>当前持有空单点位:</td>
+            <td><input type="text" id="sellOrder" readonly="true"/></td>
+            <td>完全成交量:</td>
+            <td><input type="text" id="alreadyDual" readonly="true"/></td>
+
+        </tr>
+         <tr>
+            <td>持有多单订单:</td>
+            <td><input type="text" id="buyAndOrder" readonly="true"/></td>
+
+            <td>持有空单订单:</td>
+            <td><input type="text" id="sellAndOrder" readonly="true"/></td>
 
 
-            <table  style="text-align:center">
-                <tr>------------修改交易策略网格------------</tr>
+        </tr>
 
-                <tr>
-                    <td>最多持有订单数：</td>
-                    <td><input type="text" name="maxOrderSize"/></td>
-
-                    <td>交易允许点差：</td>
-                    <td><input type="text" name="diffPrice"/></td>
-                </tr>
-
-
-
-                <tr>
-                    <td>系统最低风险控价：</td>
-                    <td><input type="text" name="lowRisiPrice"/></td>
-
-                    <td>系统最高风险控价：</td>
-                    <td><input type="text" name="highriskPrice"/></td>
-                </tr>
-
-                <tr>
-                    <td>当前系统交易手数：</td>
-                    <td><input type="text" name="lotSize"/></td>
-                </tr>
-
-                <tr>
-                    <td colspan="2"><button type="button" onclick="modeifyStrategy()" >提交修改</button></td>
-                </tr>
-
-            </table>
+        <tr>
+            <td>
+                <button type="button" onclick="startSystem()">启动交易系统</button>
+            </td>
+            <td>
+                <button type="button" onclick="stopSystem()">暂停交易系统</button>
+            </td>
+        </tr>
 
 
+        <tr>
+            <form id="modifyForm" action="/tradeService/setStrategy" method="post">
 
 
-        </form>
+                <table style="text-align:center">
+                    <tr>------------修改交易策略网格------------</tr>
+
+                    <tr>
+                        <td>最多持有订单数：</td>
+                        <td><input type="text" name="maxOrderSize"/></td>
+
+                        <td>交易允许点差：</td>
+                        <td><input type="text" name="diffPrice"/></td>
+                    </tr>
 
 
-    </tr>
-</table>
+                    <tr>
+                        <td>系统最低风险控价：</td>
+                        <td><input type="text" name="lowRisiPrice"/></td>
+
+                        <td>系统最高风险控价：</td>
+                        <td><input type="text" name="highriskPrice"/></td>
+                    </tr>
+
+                    <tr>
+                        <td>当前系统交易手数：</td>
+                        <td><input type="text" name="lotSize"/></td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2">
+                            <button type="button" onclick="modeifyStrategy()">提交修改</button>
+                        </td>
+                    </tr>
+
+                </table>
+
+
+            </form>
+
+
+        </tr>
+
+
+        <tr>
+            <form id="initPrice" action="/tradeInfo/setOrderInfo" method="post">
+
+
+                <table style="text-align:center">
+                    <tr>------------导入未完成订单------------</tr>
+
+                    <tr>
+                        <td>持有多单订单数据：</td>
+                        <td><input type="text" name="initBuyOrder"/></td>
+
+
+                    </tr>
+                    <tr>
+                        <td>持有空单订单数据：</td>
+                        <td><input type="text" name="initSellOrder"/></td>
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2">
+                            <button type="button" onclick="initPrice()">提交修改</button>
+                        </td>
+                    </tr>
+
+                </table>
+
+
+            </form>
+
+
+        </tr>
+    </table>
 </div>
 
 </body>
