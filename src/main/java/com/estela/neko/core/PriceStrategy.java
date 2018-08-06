@@ -165,7 +165,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 400, TimeUnit.MILLISECONDS);
+            , 1000, 55, TimeUnit.MILLISECONDS);
 
     }
 
@@ -208,20 +208,22 @@ public class PriceStrategy implements NetTradeService {
      */
     public void buyMarket(int price) {
         logger.info("进入buyMarket 购买价格:" + price);
-        try {
-            boolean flag = false;
-            synchronized (lock) {
-                flag = price_order.contains(price);
-                if (flag) {
-                    logger.warn("已经存在该价格,synchonized 同步模块作用显现: price:" + price);
-                    return;
-                }
-                lastBuyPrice = price;
-                cash -= lastBuyPrice * strategyStatus.getLotSize();
-
-                logger.warn("加入购买清单:" + price);
-                price_order.add(price);
+        boolean flag = false;
+        synchronized (lock) {
+            flag = price_order.contains(price);
+            if (flag) {
+                logger.warn("已经存在该价格,synchonized 同步模块作用显现: price:" + price);
+                return;
             }
+            lastBuyPrice = price;
+            cash -= lastBuyPrice * strategyStatus.getLotSize();
+
+            logger.warn("加入购买清单:" + price);
+            price_order.add(price);
+        }
+
+        try {
+
 
             // create order:
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
@@ -248,34 +250,7 @@ public class PriceStrategy implements NetTradeService {
                 return;
             }
 
-            // place order:
-
-            // ------------------------------------------------------ 执行订单
-            // -------------------------------------------------------
-            OrdersDetailResponse ordersDetail = apiClient
-                .ordersDetail(String.valueOf(orderId));
-            state = (String)((Map)(ordersDetail.getData())).get("state");
-
-            logger.warn("购买价格返回值:" + orderId + " 此订单状态" + state);
-            if ("filled".equals(state)) {
-                String filledAmount = (String)((Map)(ordersDetail.getData()))
-                    .get("field-amount");
-                if (Double.parseDouble(filledAmount) < 0.1) {
-                    filledAmount = "0.1";
-                }
-
-                BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
-                filledAmount = bg.toString();
-
-                sell(price + strategyStatus.getFluctuation(), filledAmount);
-
-            } else if ("submitted".equals(state) || "partial-filled".equals(state)) {
-                logger.info("购买价格:" + price + "订单执行中");
-                buyOrder.put(orderId, price);
-            } else {
-                logger.error("购买价格:" + price + "订单执行中");
-                price_order.remove(price);
-            }
+            buyOrder.put(orderId, price);
 
         } catch (Exception e) {
             logger.error("buymarket异常 购买失败", e);

@@ -1,5 +1,6 @@
 package com.estela.neko.huobi.api;
 
+import com.estela.neko.common.HttpConnectionManager;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.request.DepthRequest;
 import com.estela.neko.huobi.request.IntrustOrdersDetailRequest;
@@ -12,8 +13,16 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import okhttp3.*;
 import okhttp3.OkHttpClient.Builder;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -56,7 +65,8 @@ public class ApiClient {
      String accessKeySecret;
      String assetPassword;
 
-
+    @Autowired
+    HttpConnectionManager manager;
 
 
     /**
@@ -408,6 +418,7 @@ public class ApiClient {
     }
 
     // call api by endpoint.
+    /**
     <T> T call(String method, String uri, Object object, Map<String, String> params,
                TypeReference<T> ref) {
         ApiSignature sign = new ApiSignature();
@@ -431,6 +442,61 @@ public class ApiClient {
             throw new ApiException(e);
         }
     }
+
+     **/
+
+    <T> T call(String method, String uri, Object object, Map<String, String> params,
+               TypeReference<T> ref) {
+        ApiSignature sign = new ApiSignature();
+        sign.createSignature(this.accessKeyId, this.accessKeySecret, method, API_HOST, uri, params);
+        try {
+            CloseableHttpClient httpClient = manager.getHttpClient();
+            HttpResponse response = null;
+            if ("POST".equals(method)) {
+                HttpPost httpPost = new HttpPost(API_URL + uri + toQueryString(params));
+                httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                httpPost.addHeader("user-agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 "
+                        + "Safari/537.36");
+                httpPost.addHeader("Accept-Language", "zh-cn");
+
+                httpPost.setEntity(new StringEntity(JsonUtil.writeValue(object)));
+
+                if (this.assetPassword != null) {
+                    httpPost.addHeader("AuthData", authData());
+                }
+                response =  httpClient.execute(httpPost);
+
+            } else {
+
+                HttpGet httpGet = new HttpGet(API_URL + uri + "?" + toQueryString(params));
+                httpGet.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                httpGet.addHeader("user-agent",
+                    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 "
+                        + "Safari/537.36");
+                httpGet.addHeader("Accept-Language", "zh-cn");
+
+                if (this.assetPassword != null) {
+                    httpGet.addHeader("AuthData", authData());
+                }
+
+                response=  httpClient.execute(httpGet);
+            }
+
+
+
+                HttpEntity resEntity = response.getEntity();
+            String result = EntityUtils.toString(resEntity, "utf-8");
+            
+            return JsonUtil.readValue(result, ref);
+        } catch (IOException e) {
+            throw new ApiException(e);
+        }
+    }
+
+
 
     String authData() {
         MessageDigest md = null;
