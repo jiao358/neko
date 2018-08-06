@@ -152,7 +152,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 50, TimeUnit.MILLISECONDS);
+            , 1000, 100, TimeUnit.MILLISECONDS);
 
         buyScheduleOrder.scheduleAtFixedRate(() -> {
                 logger.info("开始确认 buyOrder 是否全部成交信息");
@@ -184,7 +184,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 55, TimeUnit.MILLISECONDS);
+            , 1000, 120, TimeUnit.MILLISECONDS);
 
     }
 
