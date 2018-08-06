@@ -77,6 +77,7 @@ public class PriceStrategy implements NetTradeService {
     public void addSellOrder(String price,String order){
         sellOrder.put(Long.valueOf(price),Integer.valueOf(order));
         sell_order.add(Integer.parseInt(order));
+        price_order.add(Integer.parseInt(order)-100);
     }
 
 
@@ -89,6 +90,7 @@ public class PriceStrategy implements NetTradeService {
      * 老版本
      */
     public void startTradePrice() {
+
         scheduleReflash.scheduleWithFixedDelay(() -> {
             try {
                 logger.info("开始执行价格刷新策略");
@@ -119,11 +121,10 @@ public class PriceStrategy implements NetTradeService {
                         logger.info("确认清除订单号:" + orderId + "订单价格:" + price);
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
-                            logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-
+                            logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                            strategyStatus.completeTrade();
                             calTradeHandlers.execute(()->{
                                 try{
-                                    strategyStatus.completeTrade();
                                     String time = getChinaTime();
                                     if(currentDate.equals(time)){
                                         strategyStatus.todayCompleteTrade();
