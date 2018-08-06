@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -39,6 +41,8 @@ public class PriceStrategy implements NetTradeService {
     HttpHelper httpHelper;
     @Autowired
     PriceUtil priceUtil;
+
+    private volatile String currentDate;
     /**
      * 缓存accountId
      */
@@ -52,6 +56,7 @@ public class PriceStrategy implements NetTradeService {
     private ScheduledExecutorService buyScheduleOrder = new ScheduledThreadPoolExecutor(1);
 
     private Executor executor = Executors.newFixedThreadPool(1);
+    private Executor calTradeHandlers = Executors.newFixedThreadPool(1);
 
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> sell_order = Collections.synchronizedSet(new HashSet());
@@ -115,8 +120,21 @@ public class PriceStrategy implements NetTradeService {
                         String state = (String)((Map)(ordersDetail.getData())).get("state");
                         if ("filled".equals(state)) {
                             logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-                            strategyStatus.completeTrade();
 
+                            calTradeHandlers.execute(()->{
+                                try{
+                                    strategyStatus.completeTrade();
+                                    String time = getChinaTime();
+                                    if(currentDate.equals(time)){
+                                        strategyStatus.todayCompleteTrade();
+                                    }else{
+                                        strategyStatus.todayCompleteTradeSetZero();
+                                    }
+                                }catch (Exception e){
+                                    logger.error("统计交易信息详情失败:",e);
+                                }
+
+                            });
                             sell_order.remove(price);
                             price_order.remove(price - 100);
                             sellOrder.remove(orderId);
@@ -312,6 +330,32 @@ public class PriceStrategy implements NetTradeService {
         AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
         Accounts account = accounts.getData().get(0);
         accountId = account.getId();
+        currentDate=getChinaTime();
+    }
+
+    public String getChinaTime(){
+        Calendar cal = Calendar.getInstance();
+        // 设置格式化的SimpleDateFormat对象，指定中国语言环境
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
+        // 创建时区（TimeZone）对象，设置时区为“亚洲/重庆"
+        TimeZone TZ = TimeZone.getTimeZone("Asia/Chongqing");
+        // 将SimpleDateFormat强制转换为DateFormat
+        DateFormat df = null;
+        try
+        {
+            df = (DateFormat)sdf;
+        }
+        catch(Exception E)
+        {
+            E.printStackTrace();
+        }
+        // 为DateFormat对象设置时区
+        df.setTimeZone(TZ);
+        // 获取时间表达式
+        String cdate = df.format(cal.getTime());
+
+        return cdate;
+
     }
 
 }

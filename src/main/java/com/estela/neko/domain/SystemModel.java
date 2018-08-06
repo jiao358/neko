@@ -49,6 +49,16 @@ public class SystemModel {
 
     private int alreadyDual;
 
+    private int todayTrade;
+
+    public int getTodayTrade() {
+        return todayTrade;
+    }
+
+    public void setTodayTrade(int todayTrade) {
+        this.todayTrade = todayTrade;
+    }
+
     public String getBuyAndOrder() {
         return buyAndOrder;
     }

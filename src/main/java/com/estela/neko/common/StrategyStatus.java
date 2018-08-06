@@ -49,6 +49,10 @@ public class StrategyStatus {
      */
     private AtomicInteger completeTrade = new AtomicInteger(0);
     /**
+     * 今天完成的卖单
+     */
+    private AtomicInteger todayCompleteTrade = new AtomicInteger(0);
+    /**
      * 浮动交易点数
      */
     private Integer fluctuation = 100;
@@ -150,6 +154,19 @@ public class StrategyStatus {
 
     public void completeTrade() {
         completeTrade.incrementAndGet();
+    }
+
+    public void todayCompleteTrade() {
+        todayCompleteTrade.incrementAndGet();
+    }
+
+    public void todayCompleteTradeSetZero() {
+        todayCompleteTrade.set(1);
+    }
+
+
+    public AtomicInteger getTodayCompleteTrade() {
+        return todayCompleteTrade;
     }
 
     public int getCompleteTrade() {

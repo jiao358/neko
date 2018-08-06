@@ -49,6 +49,7 @@ public class CommonUtil {
         systemModel.setBuyAndOrder(JSONObject.toJSONString(priceStrategy.buyOrder));
         systemModel.setSellAndOrder(JSONObject.toJSONString(priceStrategy.sellOrder));
 
+        systemModel.setTodayTrade(strategyStatus.getTodayCompleteTrade().get());
         systemModel.setBuyOrder(buyOrderList);
         systemModel.setSellOrder(sellOrderList);
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());
