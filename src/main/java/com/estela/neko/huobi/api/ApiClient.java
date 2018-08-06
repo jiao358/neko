@@ -418,7 +418,7 @@ public class ApiClient {
     }
 
     // call api by endpoint.
-    /**
+
     <T> T call(String method, String uri, Object object, Map<String, String> params,
                TypeReference<T> ref) {
         ApiSignature sign = new ApiSignature();
@@ -443,8 +443,8 @@ public class ApiClient {
         }
     }
 
-     **/
 
+    /**
     <T> T call(String method, String uri, Object object, Map<String, String> params,
                TypeReference<T> ref) {
         ApiSignature sign = new ApiSignature();
@@ -489,13 +489,13 @@ public class ApiClient {
 
                 HttpEntity resEntity = response.getEntity();
             String result = EntityUtils.toString(resEntity, "utf-8");
-            
+
             return JsonUtil.readValue(result, ref);
         } catch (IOException e) {
             throw new ApiException(e);
         }
     }
-
+**/
 
 
     String authData() {
