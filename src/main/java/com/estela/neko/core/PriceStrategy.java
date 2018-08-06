@@ -76,13 +76,13 @@ public class PriceStrategy implements NetTradeService {
 
     public void addSellOrder(String price,String order){
         sellOrder.put(Long.valueOf(price),Integer.valueOf(order));
-        sell_order.add(Integer.parseInt(price));
+        sell_order.add(Integer.parseInt(order));
     }
 
 
     public void addBuyOrder(String price,String order){
         buyOrder.put(Long.valueOf(price),Integer.valueOf(order));
-        price_order.add(Integer.parseInt(price));
+        price_order.add(Integer.parseInt(order));
     }
 
     /**
