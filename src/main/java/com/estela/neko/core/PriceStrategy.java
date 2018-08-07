@@ -110,12 +110,12 @@ public class PriceStrategy implements NetTradeService {
                 logger.error("刷新价格策略失败");
             }
 
-        }, 100, 100, TimeUnit.MILLISECONDS);
+        }, 100, 35, TimeUnit.MILLISECONDS);
 
         tradingSchedule.scheduleWithFixedDelay(() -> {
             logger.info("进行买入执行");
             checkBuyMarket();
-        }, 100, 100, TimeUnit.MILLISECONDS);
+        }, 100, 70, TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(() -> {
                 logger.info("开始确认 sellOrder 是否成交信息");
@@ -162,7 +162,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 100, TimeUnit.MILLISECONDS);
+            , 1000, 50, TimeUnit.MILLISECONDS);
 
         buyScheduleOrder.scheduleAtFixedRate(() -> {
                 logger.info("开始确认 buyOrder 是否全部成交信息");
@@ -197,7 +197,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 120, TimeUnit.MILLISECONDS);
+            , 1000, 100, TimeUnit.MILLISECONDS);
 
     }
 
