@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 public class HttpConnectionManager {
     PoolingHttpClientConnectionManager cm = null;
 
+
     @PostConstruct
     public void init() {
         LayeredConnectionSocketFactory sslsf = null;
@@ -39,7 +40,7 @@ public class HttpConnectionManager {
             .build();
         cm =new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         cm.setMaxTotal(200);
-        cm.setDefaultMaxPerRoute(20);
+        cm.setDefaultMaxPerRoute(40);
     }
 
     public CloseableHttpClient getHttpClient() {

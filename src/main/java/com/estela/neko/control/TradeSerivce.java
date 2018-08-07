@@ -58,7 +58,7 @@ public class TradeSerivce {
     public synchronized Object startSystem() throws Exception {
         Result result = new Result();
         if(!Diamond.sysFirstRun.get()){
-            accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
+            accountModel.setKey("205911d9-34c137a1-33ed938c-d9c12", "c35095b1-d25a11d6-a949a451-205a4");
             Diamond.canRunning=true;
             priceStrategy.execute();
             Diamond.sysFirstRun.set(true);

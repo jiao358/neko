@@ -6,6 +6,7 @@ import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.config.Diamond;
 import com.estela.neko.huobi.api.ApiClient;
+import com.estela.neko.huobi.api.ApiNewClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
@@ -15,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.expression.Maps;
+import org.thymeleaf.util.MapUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,19 +37,22 @@ public class PriceStrategy implements NetTradeService {
     @Autowired
     AccountModel accountModel;
     @Autowired
-    ApiClient apiClient;
+    ApiNewClient apiNewClient;
     @Autowired
     StrategyStatus strategyStatus;
     @Autowired
     HttpHelper httpHelper;
     @Autowired
     PriceUtil priceUtil;
+    @Autowired
+    ApiClient apiClient;
+
 
     private volatile String currentDate;
     /**
      * 缓存accountId
      */
-    private volatile long accountId = 0L;
+    private volatile long accountId = 4267079L;
 
     private ScheduledExecutorService scheduleReflash = new ScheduledThreadPoolExecutor(1);
 
@@ -116,10 +122,14 @@ public class PriceStrategy implements NetTradeService {
 
                 sellOrder.forEach((orderId, price) -> {
                     try {
-                        OrdersDetailResponse ordersDetail = apiClient
-                            .ordersDetail(String.valueOf(orderId));
+
+                        Map<String,String> orderDetail =apiNewClient.getOrderInfoMap(String.valueOf(orderId));
+                        if(MapUtils.isEmpty(orderDetail)){
+                            logger.error("售出订单获取异常:"+orderId);
+                            return;
+                        }
                         logger.info("确认清除订单号:" + orderId + "订单价格:" + price);
-                        String state = (String)((Map)(ordersDetail.getData())).get("state");
+                        String state = orderDetail.get("state");
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
                             strategyStatus.completeTrade();
@@ -159,13 +169,16 @@ public class PriceStrategy implements NetTradeService {
 
                 buyOrder.forEach((orderId, price) -> {
                     try {
-                        OrdersDetailResponse ordersDetail = apiClient
-                            .ordersDetail(String.valueOf(orderId));
+                        Map<String,String> orderDetail =apiNewClient.getOrderInfoMap(String.valueOf(orderId));
+                        if(MapUtils.isEmpty(orderDetail)){
+                            logger.error("买入订单获取异常:"+orderId);
+                            return;
+                        }
                         logger.info("确认购买订单号:" + orderId + "订单价格:" + price);
-                        String state = (String)((Map)(ordersDetail.getData())).get("state");
+                        String state = orderDetail.get("state");
                         if ("filled".equals(state)) {
                             logger.info("多单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
-                            String filledAmount = (String)((Map)(ordersDetail.getData()))
+                            String filledAmount = orderDetail
                                 .get("field-amount");
                             if (Double.parseDouble(filledAmount) < 0.1) {
                                 filledAmount = "0.1";
@@ -253,12 +266,13 @@ public class PriceStrategy implements NetTradeService {
             createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
             createOrderReq.source = "api";
             // -------------------------------------------------------
-            long orderId = apiClient.createOrder(createOrderReq);
+
+            long orderId = apiNewClient.createOrder(createOrderReq);
             String state = "";
 
             if (priceUtil.isSatisfyTrading(PriceMemery.priceNow, price) && !priceUtil.isOverRishPriceOrLowPrice(
                 price)) {
-                String r = apiClient.placeOrder(orderId);
+                apiNewClient.executeOrder(orderId);
             } else {
                 orderId = 0L;
             }
@@ -276,7 +290,7 @@ public class PriceStrategy implements NetTradeService {
         }
 
     }
-
+    //todo 需要重试机制
     public void sell(int priceStep, String fillAmount) {
 
         try {
@@ -295,8 +309,8 @@ public class PriceStrategy implements NetTradeService {
             createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
             createOrderReq.source = "api";
 
-            long orderId = apiClient.createOrder(createOrderReq);
-            String r = apiClient.placeOrder(orderId);
+            long orderId = apiNewClient.createOrder(createOrderReq);
+            apiNewClient.executeOrder(orderId);
 
             sell_order.add(priceStep);
             sellOrder.put(orderId, priceStep);
