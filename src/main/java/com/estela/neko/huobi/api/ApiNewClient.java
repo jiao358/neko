@@ -151,6 +151,7 @@ public class ApiNewClient {
 
                     map.put("state", ds.getJSONObject("data").getString("state"));
                     map.put("field-amount", ds.getJSONObject("data").getString("field-amount"));
+                    map.put("data" ,ds.getString("data"));
                 }
             }
 

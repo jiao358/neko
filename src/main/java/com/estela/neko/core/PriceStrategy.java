@@ -131,7 +131,7 @@ public class PriceStrategy implements NetTradeService {
                         logger.info("确认清除订单号:" + orderId + "订单价格:" + price);
                         String state = orderDetail.get("state");
                         if ("filled".equals(state)) {
-                            logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                            logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
                             strategyStatus.completeTrade();
                             calTradeHandlers.execute(()->{
                                 try{
@@ -139,6 +139,7 @@ public class PriceStrategy implements NetTradeService {
                                     if(currentDate.equals(time)){
                                         strategyStatus.todayCompleteTrade();
                                     }else{
+                                        currentDate= time;
                                         strategyStatus.todayCompleteTradeSetZero();
                                     }
                                 }catch (Exception e){
@@ -177,7 +178,7 @@ public class PriceStrategy implements NetTradeService {
                         logger.info("确认购买订单号:" + orderId + "订单价格:" + price);
                         String state = orderDetail.get("state");
                         if ("filled".equals(state)) {
-                            logger.info("多单，价格约" + price + "点，订单号:" + orderId + ",完全成交");
+                            logger.warn("多单订单号:" + orderId +",data="+orderDetail.get("data"));
                             String filledAmount = orderDetail
                                 .get("field-amount");
                             if (Double.parseDouble(filledAmount) < 0.1) {
