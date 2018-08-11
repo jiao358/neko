@@ -1,5 +1,6 @@
 package com.estela.neko.domain;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,11 @@ public class SystemModel {
     private int alreadyDual;
 
     private int todayTrade;
+
+    private BigDecimal profit;
+
+    private BigDecimal sellFee;
+    private BigDecimal buyFee;
 
     public int getTodayTrade() {
         return todayTrade;
@@ -165,6 +171,30 @@ public class SystemModel {
 
     public String getFloatStrategy() {
         return floatStrategy;
+    }
+
+    public BigDecimal getProfit() {
+        return profit;
+    }
+
+    public void setProfit(BigDecimal profit) {
+        this.profit = profit;
+    }
+
+    public BigDecimal getSellFee() {
+        return sellFee;
+    }
+
+    public void setSellFee(BigDecimal sellFee) {
+        this.sellFee = sellFee;
+    }
+
+    public BigDecimal getBuyFee() {
+        return buyFee;
+    }
+
+    public void setBuyFee(BigDecimal buyFee) {
+        this.buyFee = buyFee;
     }
 
     public void setFloatStrategy(String floatStrategy) {

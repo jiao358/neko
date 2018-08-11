@@ -1,9 +1,7 @@
 package com.estela.neko.core;
 
 import com.estela.neko.api.NetTradeService;
-import com.estela.neko.common.AccountModel;
-import com.estela.neko.common.HttpHelper;
-import com.estela.neko.common.StrategyStatus;
+import com.estela.neko.common.*;
 import com.estela.neko.config.Diamond;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.api.ApiNewClient;
@@ -47,6 +45,8 @@ public class PriceStrategy implements NetTradeService {
     @Autowired
     ApiClient apiClient;
 
+    @Autowired
+    FundReport report;
 
     private volatile String currentDate;
     /**
@@ -63,6 +63,7 @@ public class PriceStrategy implements NetTradeService {
 
     private Executor executor = Executors.newFixedThreadPool(1);
     private Executor calTradeHandlers = Executors.newFixedThreadPool(1);
+    private Executor reportHandler = Executors.newFixedThreadPool(1);
 
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> sell_order = Collections.synchronizedSet(new HashSet());
@@ -133,6 +134,7 @@ public class PriceStrategy implements NetTradeService {
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
                             strategyStatus.completeTrade();
+                            final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             calTradeHandlers.execute(()->{
                                 try{
                                     String time = getChinaTime();
@@ -141,15 +143,22 @@ public class PriceStrategy implements NetTradeService {
                                     }else{
                                         currentDate= time;
                                         strategyStatus.todayCompleteTradeSetZero();
+                                        report.cleanMap();;
                                     }
                                 }catch (Exception e){
                                     logger.error("统计交易信息详情失败:",e);
                                 }
 
                             });
+                            reportHandler.execute(()->{
+                                try{
+                                    report.calculate(sellFundomain);
+                                }catch (Exception e){}
+                            });
                             sell_order.remove(price);
                             price_order.remove(price - 100);
                             sellOrder.remove(orderId);
+
                             executor.execute(() -> {
                                 buyMarket(price);
                             });
@@ -188,7 +197,8 @@ public class PriceStrategy implements NetTradeService {
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                             filledAmount = bg.toString();
                             buyOrder.remove(orderId);
-                            sell(price + strategyStatus.getFluctuation(), filledAmount);
+                            FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
+                            sell(price + strategyStatus.getFluctuation(), filledAmount,buyerFundDomain);
                         }
 
                     } catch (Exception e) {
@@ -292,7 +302,7 @@ public class PriceStrategy implements NetTradeService {
 
     }
     //todo 需要重试机制
-    public void sell(int priceStep, String fillAmount) {
+    public void sell(int priceStep, String fillAmount, FundDomain buyerFundDomain ) {
 
         try {
             if (sell_order.contains(priceStep)) {
@@ -312,8 +322,8 @@ public class PriceStrategy implements NetTradeService {
 
             long orderId = apiNewClient.createOrder(createOrderReq);
             apiNewClient.executeOrder(orderId);
-
             sell_order.add(priceStep);
+            report.setFundReportUnit(buyerFundDomain,orderId);
             sellOrder.put(orderId, priceStep);
 
         } catch (Exception e) {

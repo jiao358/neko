@@ -1,6 +1,7 @@
 package com.estela.neko.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.estela.neko.common.FundReport;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.config.Diamond;
 import com.estela.neko.core.PriceMemery;
@@ -28,6 +29,8 @@ public class CommonUtil {
     PriceMemery priceMemery;
     @Autowired
     StrategyStatus strategyStatus;
+    @Autowired
+    FundReport fundReport;
 
 
     public SystemModel generateCurrentModel(){
@@ -53,6 +56,12 @@ public class CommonUtil {
         systemModel.setBuyOrder(buyOrderList);
         systemModel.setSellOrder(sellOrderList);
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());
+
+        // 进行费率计算
+        systemModel.setProfit(fundReport.getProfit());
+        systemModel.setBuyFee(fundReport.getBuyFee());
+        systemModel.setSellFee(fundReport.getSellFee());
+
         return systemModel;
 
 

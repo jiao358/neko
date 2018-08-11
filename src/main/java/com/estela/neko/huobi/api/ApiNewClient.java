@@ -147,11 +147,14 @@ public class ApiNewClient {
                 HttpEntity resEntity = response.getEntity();
                 if (resEntity != null) {
                     result = EntityUtils.toString(resEntity, "utf-8");
-                    JSONObject ds = JSONObject.parseObject(result);
+                    JSONObject ds = JSONObject.parseObject(result).getJSONObject("data");
+                    map.put("state", ds.getString("state"));
+                    map.put("field-amount", ds.getString("field-amount"));
+                    map.put("field-cash-amount", ds.getString("field-cash-amount"));
+                    map.put("field-cash-amount", ds.getString("field-fees"));
 
-                    map.put("state", ds.getJSONObject("data").getString("state"));
-                    map.put("field-amount", ds.getJSONObject("data").getString("field-amount"));
-                    map.put("data" ,ds.getString("data"));
+
+                    map.put("data" ,ds.toJSONString());
                 }
             }
 
