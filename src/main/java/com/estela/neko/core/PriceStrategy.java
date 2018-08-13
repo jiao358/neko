@@ -45,8 +45,6 @@ public class PriceStrategy implements NetTradeService {
     @Autowired
     ApiClient apiClient;
 
-    @Autowired
-    FundReport report;
 
     private volatile String currentDate;
     /**
@@ -134,7 +132,7 @@ public class PriceStrategy implements NetTradeService {
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
                             strategyStatus.completeTrade();
-                            final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
+                           // final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             calTradeHandlers.execute(()->{
                                 try{
                                     String time = getChinaTime();
@@ -143,18 +141,18 @@ public class PriceStrategy implements NetTradeService {
                                     }else{
                                         currentDate= time;
                                         strategyStatus.todayCompleteTradeSetZero();
-                                        report.cleanMap();;
+                                        //report.cleanMap();;
                                     }
                                 }catch (Exception e){
                                     logger.error("统计交易信息详情失败:",e);
                                 }
 
                             });
-                            reportHandler.execute(()->{
+                     /*       reportHandler.execute(()->{
                                 try{
                                     report.calculate(sellFundomain);
                                 }catch (Exception e){}
-                            });
+                            });*/
                             sell_order.remove(price);
                             price_order.remove(price - 100);
                             sellOrder.remove(orderId);
@@ -202,7 +200,7 @@ public class PriceStrategy implements NetTradeService {
                         }
 
                     } catch (Exception e) {
-                        logger.error("清除sellOrder 异常 订单:" + orderId, e);
+                        logger.error("清除buyOrder 异常 订单:" + orderId, e);
                     }
 
                 });

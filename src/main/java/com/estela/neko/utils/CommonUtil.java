@@ -76,9 +76,9 @@ public class CommonUtil {
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());
 
         // 进行费率计算
-        systemModel.setProfit(fundReport.getProfit());
+      /*  systemModel.setProfit(fundReport.getProfit());
         systemModel.setBuyFee(fundReport.getBuyFee());
-        systemModel.setSellFee(fundReport.getSellFee());
+        systemModel.setSellFee(fundReport.getSellFee());*/
 
         //当前USDT余额以及冻结
         if(time.equals(priceStrategy.getChinaTime())){
