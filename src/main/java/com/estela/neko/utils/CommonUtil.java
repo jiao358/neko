@@ -102,6 +102,7 @@ public class CommonUtil {
             String currency= domain.getString("currency");
             String type = domain.getString("type");
             BigDecimal amount = domain.getBigDecimal("balance");
+            amount.setScale(18);
 
             if("usdt".equals(currency) && "trade".equals(type)){
                 systemModel.setUsdtNow(amount);

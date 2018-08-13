@@ -45,11 +45,18 @@ public class TradeInfoService {
 
         if(!StringUtils.isEmpty(initBuyOrder)){
             Gson gson = new Gson();
-            Map<String, String> map = new HashMap<String, String>();
+            Map<String, Double> map = new HashMap<String, Double>();
             map = gson.fromJson(initBuyOrder, map.getClass());
-            map.forEach((key,value)->{
-                priceStrategy.addBuyOrder(key,value);
-            });
+
+            for(Map.Entry<String,Double> entry:map.entrySet()){
+                String order = entry.getKey();
+                Double price =entry.getValue();
+
+                priceStrategy.addBuyOrder(order,price.intValue()+"");
+            }
+
+
+
         }
 
 

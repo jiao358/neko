@@ -88,9 +88,9 @@ public class PriceStrategy implements NetTradeService {
     }
 
 
-    public void addBuyOrder(String price,String order){
-        buyOrder.put(Long.valueOf(price),Integer.valueOf(order));
-        price_order.add(Integer.parseInt(order));
+    public void addBuyOrder(String orderId,String price){
+        buyOrder.put(Long.valueOf(orderId),Integer.valueOf(price));
+        price_order.add(Integer.parseInt(price));
     }
 
     /**
@@ -197,8 +197,8 @@ public class PriceStrategy implements NetTradeService {
                             BigDecimal bg = new BigDecimal(filledAmount).setScale(2, RoundingMode.DOWN);
                             filledAmount = bg.toString();
                             buyOrder.remove(orderId);
-                            FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
-                            sell(price + strategyStatus.getFluctuation(), filledAmount,buyerFundDomain);
+                         //   FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
+                            sell(price + strategyStatus.getFluctuation(), filledAmount,null);
                         }
 
                     } catch (Exception e) {
@@ -323,7 +323,7 @@ public class PriceStrategy implements NetTradeService {
             long orderId = apiNewClient.createOrder(createOrderReq);
             apiNewClient.executeOrder(orderId);
             sell_order.add(priceStep);
-            report.setFundReportUnit(buyerFundDomain,orderId);
+            //report.setFundReportUnit(buyerFundDomain,orderId);
             sellOrder.put(orderId, priceStep);
 
         } catch (Exception e) {
