@@ -173,7 +173,7 @@ public class ApiNewClient {
     }
 
     public List<JSONObject> getAccountAmount(int orderId) throws Exception {
-        String uri="/v1/order/orders/" + orderId;
+        String uri="/v1/account/accounts/"+orderId+"/balance";
         Map<String,String> param = new HashMap<>();
 
 
