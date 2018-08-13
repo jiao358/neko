@@ -38,9 +38,10 @@
                     $('#sellAndOrder').val(model.sellAndOrder);
                     $('#todayTrade').val(model.todayTrade);
 
-                    $('#profit').val(model.profit);
-                    $('#buyFee').val(model.buyFee);
-                    $('#sellFee').val(model.sellFee);
+                    $('#usdtNow').val(model.usdtNow);
+                    $('#usdtFrozen').val(model.usdtFrozen);
+                    $('#htNow').val(model.htNow);
+                    $('#htFrozen').val(model.htFrozen);
 
 
                 }
@@ -202,14 +203,18 @@
         </tr>
 
         <tr>
-            <td>买入手续费(HT):</td>
-            <td><input type="text" id="buyFee" readonly="true"/></td>
+            <td>USDT余额:</td>
+            <td><input type="text" id="usdtNow" readonly="true"/></td>
+            <td>USDT冻结:</td>
+            <td><input type="text" id="usdtFrozen" readonly="true"/></td>
 
-            <td>卖出手续费(USDT):</td>
-            <td><input type="text" id="sellFee" readonly="true"/></td>
 
-            <td>利润(USDT):</td>
-            <td><input type="text" id="profit" readonly="true"/></td>
+            <td>HT余额:</td>
+            <td><input type="text" id="htNow" readonly="true"/></td>
+            <td>HT冻结:</td>
+            <td><input type="text" id="htFrozen" readonly="true"/></td>
+
+
         </tr>
 
         <tr>

@@ -52,6 +52,19 @@ public class SystemModel {
 
     private int todayTrade;
 
+    /**
+     * usdt 以及ht 余额
+     */
+    private BigDecimal usdtNow;
+
+    private BigDecimal usdtFrozen;
+
+    private BigDecimal htNow;
+
+    private BigDecimal htFrozen;
+
+
+
     private BigDecimal profit;
 
     private BigDecimal sellFee;
@@ -199,5 +212,37 @@ public class SystemModel {
 
     public void setFloatStrategy(String floatStrategy) {
         this.floatStrategy = floatStrategy;
+    }
+
+    public BigDecimal getUsdtNow() {
+        return usdtNow;
+    }
+
+    public void setUsdtNow(BigDecimal usdtNow) {
+        this.usdtNow = usdtNow;
+    }
+
+    public BigDecimal getUsdtFrozen() {
+        return usdtFrozen;
+    }
+
+    public void setUsdtFrozen(BigDecimal usdtFrozen) {
+        this.usdtFrozen = usdtFrozen;
+    }
+
+    public BigDecimal getHtNow() {
+        return htNow;
+    }
+
+    public void setHtNow(BigDecimal htNow) {
+        this.htNow = htNow;
+    }
+
+    public BigDecimal getHtFrozen() {
+        return htFrozen;
+    }
+
+    public void setHtFrozen(BigDecimal htFrozen) {
+        this.htFrozen = htFrozen;
     }
 }

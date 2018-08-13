@@ -1,5 +1,6 @@
 package com.estela.neko.huobi.api;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.HttpConnectionManager;
 import com.estela.neko.huobi.request.CreateOrderRequest;
@@ -15,9 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.expression.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -168,7 +172,61 @@ public class ApiNewClient {
 
     }
 
+    public List<JSONObject> getAccountAmount(int orderId) throws Exception {
+        String uri="/v1/order/orders/" + orderId;
+        Map<String,String> param = new HashMap<>();
 
+
+        JSONObject  ds = JSONObject.parseObject(get(uri,param));
+        List<JSONObject> result = new ArrayList();
+        String success = ds.getString("status");
+        if(success.equals("ok")){
+            JSONArray array=  ds.getJSONObject("data").getJSONArray("list");
+            List<JSONObject> linkedList = new ArrayList();
+            for(int i=0;i<array.size();i++){
+                linkedList.add(array.getJSONObject(i));
+
+            }
+
+            linkedList.forEach(domain->{
+                if(domain.getString("currency").equals("usdt") || "ht".equals(domain.getString("currency"))){
+                    result.add(domain);
+                }
+            });
+
+        }
+
+
+
+
+        return result;
+
+    }
+
+
+    String get(String uri,Map<String,String > param ){
+        ApiSignature sign = new ApiSignature();
+        sign.createSignature(this.accessKeyId, this.accessKeySecret, "GET", API_HOST, uri, param);
+        CloseableHttpClient httpClient = manager.getHttpClient();
+        String result="";
+        try{
+            HttpGet httpGet = new HttpGet(API_URL+uri+"?"+toQueryString(param));
+            setHeader(httpGet);
+            HttpResponse response = httpClient.execute(httpGet);
+            if (response != null) {
+                HttpEntity resEntity = response.getEntity();
+                if (resEntity != null) {
+                    result = EntityUtils.toString(resEntity, "utf-8");
+                }
+            }
+        }catch (Exception e){
+            System.out.println("get 请求失败");
+        }
+
+
+        return result;
+
+    }
 
     String toQueryString(Map<String, String> params) {
         return String.join("&", params.entrySet().stream().map((entry) -> {
