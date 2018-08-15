@@ -80,6 +80,8 @@ public class PriceStrategy implements NetTradeService {
     public static int cash = 0 * 10000;
     public static final int priceLimit =300;
 
+    public int logTime = 0;
+
 
     public void addSellOrder(String price,String order){
         sellOrder.put(Long.valueOf(price),Integer.valueOf(order));
@@ -124,6 +126,9 @@ public class PriceStrategy implements NetTradeService {
                 sellOrder.forEach((orderId, price) -> {
                     try {
                         if(PriceMemery.priceNow+priceLimit<price){
+                            if(logTime>50){
+                                logger.warn("SellOrder 信息不符合当前价格内查询 orderId:"+orderId+" price:"+price+" currentPrice:"+ price);
+                            }
                             return ;
                         }
 
@@ -216,11 +221,15 @@ public class PriceStrategy implements NetTradeService {
     }
 
     public void checkBuyMarket() {
+        logTime++;
         int currentAppPrice = PriceMemery.priceNow;
         int step = strategyStatus.getFluctuation();
         int price = currentAppPrice / step * step;
         boolean access = currentAppPrice == price;
-        logger.info("当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
+        if(logTime>50){
+            logger.warn("当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
+            logTime= 0;
+        }
         if (access && price != 0) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
                 logger.info("满足准入条件");
