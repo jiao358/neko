@@ -133,8 +133,8 @@ public class PriceStrategy implements NetTradeService {
                             logger.error("售出订单获取异常:"+orderId);
                             return;
                         }
-                        logger.info("确认清除订单号:" + orderId + "订单价格:" + price);
                         String state = orderDetail.get("state");
+                        logger.warn("确认清除订单号:" + orderId + "订单价格:" + price+"state:"+state);
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
                             strategyStatus.completeTrade();
@@ -188,8 +188,8 @@ public class PriceStrategy implements NetTradeService {
                             logger.error("买入订单获取异常:"+orderId);
                             return;
                         }
-                        logger.warn("确认购买订单号:" + orderId + "订单价格:" + price);
                         String state = orderDetail.get("state");
+                        logger.warn("确认购买订单号:" + orderId + "订单价格:" + price+"state:"+state);
                         if ("filled".equals(state)) {
                             logger.warn("多单订单号:" + orderId +",data="+orderDetail.get("data"));
                             String filledAmount = orderDetail
