@@ -235,7 +235,8 @@ public class PriceStrategy implements NetTradeService {
 
     public boolean isOverHandLimit() {
         int olderSize = price_order.size();
-        if (olderSize >= strategyStatus.getMaxOrderSize()) {
+        int sellSize= sell_order.size();
+        if (olderSize >= strategyStatus.getMaxOrderSize() || sellSize>=strategyStatus.getMaxOrderSize() || olderSize+sellSize> strategyStatus.getMaxOrderSize()) {
             return true;
         } else {
             return false;

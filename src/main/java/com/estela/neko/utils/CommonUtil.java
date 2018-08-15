@@ -81,14 +81,14 @@ public class CommonUtil {
         systemModel.setSellFee(fundReport.getSellFee());*/
 
         //当前USDT余额以及冻结
-        if(time.equals(priceStrategy.getChinaTime())){
+       /* if(time.equals(priceStrategy.getChinaTime())){
             setAmountModel(systemModel);
         }else{
             time = priceStrategy.getChinaTime();
-            init();
-            setAmountModel(systemModel);
-        }
 
+        }*/
+        init();
+        setAmountModel(systemModel);
 
         //当前HT余额以及冻结
 
