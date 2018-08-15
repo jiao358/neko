@@ -232,7 +232,7 @@ public class PriceStrategy implements NetTradeService {
         }
         if (access && price != 0) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
-                logger.info("满足准入条件");
+                logger.warn("满足准入条件:"+(!isOverHandLimit() && Diamond.canRunning));
 
                 if (!isOverHandLimit() && Diamond.canRunning) {
                     buyMarket(price);
@@ -250,7 +250,7 @@ public class PriceStrategy implements NetTradeService {
     public boolean isOverHandLimit() {
         int olderSize = price_order.size();
         int sellSize= sell_order.size();
-        if (olderSize >= strategyStatus.getMaxOrderSize() || sellSize>=strategyStatus.getMaxOrderSize() || olderSize+sellSize> strategyStatus.getMaxOrderSize()) {
+        if (olderSize >= strategyStatus.getMaxOrderSize() || sellSize>=strategyStatus.getMaxOrderSize() ) {
             return true;
         } else {
             return false;
