@@ -120,23 +120,26 @@ public class PriceStrategy implements NetTradeService {
         tradingSchedule.scheduleWithFixedDelay(() -> {
             logger.info("进行买入执行");
             checkBuyMarket();
-        }, 100, 70, TimeUnit.MILLISECONDS);
+        }, 100, 40, TimeUnit.MILLISECONDS);
 
         sellScheduleOrder.scheduleAtFixedRate(() -> {
                 logger.info("开始确认 sellOrder 是否成交信息");
                 sellLogTime++;
+
                 sellOrder.forEach((orderId, price) -> {
                     try {
                         if(PriceMemery.priceNow+priceLimit<price){
-                            if(sellLogTime>80){
-                                logger.warn("SellOrder 信息不符合当前价格内查询 orderId:"+orderId+" price:"+price+" currentPrice:"+ price);
-                                sellLogTime= 0;
-                            }
+
                             return ;
                         }
 
+                        long beginTime = System.currentTimeMillis();
 
                         Map<String,String> orderDetail =apiNewClient.getOrderInfoMap(String.valueOf(orderId));
+                        long castTime = System.currentTimeMillis()-beginTime;
+                        if(sellLogTime>80){
+                            logger.warn("SellOrder 查询订单信息需要:"+(castTime)+"ms  orderId:"+ orderId+" price:"+price );
+                        }
                         if(MapUtils.isEmpty(orderDetail)){
                             logger.error("售出订单获取异常:"+orderId);
                             return;
@@ -182,6 +185,10 @@ public class PriceStrategy implements NetTradeService {
                     }
 
                 });
+                if(sellLogTime>80){
+                    sellLogTime= 0;
+                }
+
 
             }
             , 1000, 100, TimeUnit.MILLISECONDS);
@@ -229,7 +236,7 @@ public class PriceStrategy implements NetTradeService {
         int step = strategyStatus.getFluctuation();
         int price = currentAppPrice / step * step;
         boolean access = currentAppPrice == price;
-        if(logTime>50){
+        if(logTime>120){
             logger.warn("当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
             logTime= 0;
         }
@@ -274,8 +281,8 @@ public class PriceStrategy implements NetTradeService {
                 logger.warn("已经存在该价格,synchonized 同步模块作用显现: price:" + price);
                 return;
             }
-            lastBuyPrice = price;
-            cash -= lastBuyPrice * strategyStatus.getLotSize();
+           // lastBuyPrice = price;
+           // cash -= lastBuyPrice * strategyStatus.getLotSize();
 
             logger.warn("加入购买清单:" + price);
             price_order.add(price);
@@ -285,6 +292,7 @@ public class PriceStrategy implements NetTradeService {
 
 
             // create order:
+            long beginTime =System.currentTimeMillis();
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
             createOrderReq.accountId = String.valueOf(accountId);
             createOrderReq.amount = Double.toString(strategyStatus.getLotSize() * (double)price / 10000);
@@ -295,11 +303,14 @@ public class PriceStrategy implements NetTradeService {
             // -------------------------------------------------------
 
             long orderId = apiNewClient.createOrder(createOrderReq);
+            logger.warn("创建buyer订单话费时间:"+(System.currentTimeMillis()-beginTime) +" ms");
             String state = "";
 
             if (priceUtil.isSatisfyTrading(PriceMemery.priceNow, price) && !priceUtil.isOverRishPriceOrLowPrice(
                 price)) {
+                beginTime = System.currentTimeMillis();
                 apiNewClient.executeOrder(orderId);
+                logger.warn("执行订单花费时间:"+(System.currentTimeMillis()-beginTime) +" ms");
             } else {
                 orderId = 0L;
             }
