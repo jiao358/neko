@@ -124,12 +124,11 @@ public class PriceStrategy implements NetTradeService {
 
         sellScheduleOrder.scheduleAtFixedRate(() -> {
                 logger.info("开始确认 sellOrder 是否成交信息");
-
+                sellLogTime++;
                 sellOrder.forEach((orderId, price) -> {
                     try {
-                        sellLogTime++;
                         if(PriceMemery.priceNow+priceLimit<price){
-                            if(sellLogTime>50){
+                            if(sellLogTime>80){
                                 logger.warn("SellOrder 信息不符合当前价格内查询 orderId:"+orderId+" price:"+price+" currentPrice:"+ price);
                                 sellLogTime= 0;
                             }
