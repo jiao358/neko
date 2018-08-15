@@ -77,6 +77,7 @@ public class PriceStrategy implements NetTradeService {
     private int lastSellPrice;
 
     public static int cash = 0 * 10000;
+    public static final int priceLimit =300;
 
 
     public void addSellOrder(String price,String order){
@@ -121,6 +122,10 @@ public class PriceStrategy implements NetTradeService {
 
                 sellOrder.forEach((orderId, price) -> {
                     try {
+                        if(PriceMemery.priceNow+priceLimit<price){
+                            return ;
+                        }
+
 
                         Map<String,String> orderDetail =apiNewClient.getOrderInfoMap(String.valueOf(orderId));
                         if(MapUtils.isEmpty(orderDetail)){
@@ -172,7 +177,7 @@ public class PriceStrategy implements NetTradeService {
             }
             , 1000, 50, TimeUnit.MILLISECONDS);
 
-        buyScheduleOrder.scheduleAtFixedRate(() -> {
+        buyScheduleOrder.scheduleWithFixedDelay(() -> {
                 logger.info("开始确认 buyOrder 是否全部成交信息");
 
                 buyOrder.forEach((orderId, price) -> {
@@ -198,6 +203,7 @@ public class PriceStrategy implements NetTradeService {
                          //   FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             sell(price + strategyStatus.getFluctuation(), filledAmount,null);
                         }
+                        Thread.sleep(100);
 
                     } catch (Exception e) {
                         logger.error("清除buyOrder 异常 订单:" + orderId, e);
