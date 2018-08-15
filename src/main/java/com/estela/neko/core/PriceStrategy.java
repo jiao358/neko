@@ -82,6 +82,8 @@ public class PriceStrategy implements NetTradeService {
 
     public int logTime = 0;
 
+    public int sellLogTime = 0;
+
 
     public void addSellOrder(String price,String order){
         sellOrder.put(Long.valueOf(price),Integer.valueOf(order));
@@ -125,9 +127,11 @@ public class PriceStrategy implements NetTradeService {
 
                 sellOrder.forEach((orderId, price) -> {
                     try {
+                        sellLogTime++;
                         if(PriceMemery.priceNow+priceLimit<price){
-                            if(logTime>50){
+                            if(sellLogTime>50){
                                 logger.warn("SellOrder 信息不符合当前价格内查询 orderId:"+orderId+" price:"+price+" currentPrice:"+ price);
+                                sellLogTime= 0;
                             }
                             return ;
                         }
