@@ -164,6 +164,9 @@ public class ApiNewClient {
 
 
             return map;
+        }catch (com.alibaba.fastjson.JSONException e){
+            logger.error("查询订单信息异常:","429 Too Many Requests");
+            return map;
         }catch (Exception e){
             logger.error("查询订单信息异常:",e);
             return map;

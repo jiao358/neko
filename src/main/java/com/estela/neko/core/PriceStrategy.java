@@ -10,6 +10,7 @@ import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
 import com.estela.neko.utils.PriceUtil;
+import org.omg.PortableServer.THREAD_POLICY_ID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,7 +176,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 50, TimeUnit.MILLISECONDS);
+            , 1000, 100, TimeUnit.MILLISECONDS);
 
         buyScheduleOrder.scheduleWithFixedDelay(() -> {
                 logger.info("开始确认 buyOrder 是否全部成交信息");
@@ -187,7 +188,7 @@ public class PriceStrategy implements NetTradeService {
                             logger.error("买入订单获取异常:"+orderId);
                             return;
                         }
-                        logger.info("确认购买订单号:" + orderId + "订单价格:" + price);
+                        logger.warn("确认购买订单号:" + orderId + "订单价格:" + price);
                         String state = orderDetail.get("state");
                         if ("filled".equals(state)) {
                             logger.warn("多单订单号:" + orderId +",data="+orderDetail.get("data"));
@@ -203,8 +204,6 @@ public class PriceStrategy implements NetTradeService {
                          //   FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             sell(price + strategyStatus.getFluctuation(), filledAmount,null);
                         }
-                        Thread.sleep(100);
-
                     } catch (Exception e) {
                         logger.error("清除buyOrder 异常 订单:" + orderId, e);
                     }
