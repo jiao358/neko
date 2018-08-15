@@ -145,7 +145,7 @@ public class PriceStrategy implements NetTradeService {
                             return;
                         }
                         String state = orderDetail.get("state");
-                        logger.warn("确认清除订单号:" + orderId + "订单价格:" + price+"state:"+state);
+                        logger.info("确认清除订单号:" + orderId + "订单价格:" + price+"state:"+state);
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
                             strategyStatus.completeTrade();
