@@ -154,7 +154,7 @@ public class ApiNewClient {
                     map.put("state", ds.getString("state"));
                     map.put("field-amount", ds.getString("field-amount"));
                     map.put("field-cash-amount", ds.getString("field-cash-amount"));
-                    map.put("field-cash-amount", ds.getString("field-fees"));
+                    map.put("field-fees", ds.getString("field-fees"));
 
 
                     map.put("data" ,ds.toJSONString());

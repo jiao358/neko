@@ -3,12 +3,14 @@ package com.estela.neko.core;
 import com.estela.neko.api.NetTradeService;
 import com.estela.neko.common.*;
 import com.estela.neko.config.Diamond;
+import com.estela.neko.domain.SystemModel;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.api.ApiNewClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
+import com.estela.neko.utils.CommonUtil;
 import com.estela.neko.utils.PriceUtil;
 import org.omg.PortableServer.THREAD_POLICY_ID;
 import org.slf4j.Logger;
@@ -45,6 +47,9 @@ public class PriceStrategy implements NetTradeService {
     PriceUtil priceUtil;
     @Autowired
     ApiClient apiClient;
+
+    @Autowired
+    CommonUtil commonUtil;
 
 
     private volatile String currentDate;
@@ -102,6 +107,11 @@ public class PriceStrategy implements NetTradeService {
      */
     public void startTradePrice() {
 
+
+        SystemModel systemModel = commonUtil.generateCurrentModel();
+        priceMemery.cash = systemModel.getUsdtNow();
+
+
         scheduleReflash.scheduleWithFixedDelay(() -> {
             try {
                 logger.info("开始执行价格刷新策略");
@@ -148,6 +158,7 @@ public class PriceStrategy implements NetTradeService {
                         logger.info("确认清除订单号:" + orderId + "订单价格:" + price+"state:"+state);
                         if ("filled".equals(state)) {
                             logger.error("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:"+orderDetail.get("data"));
+                            priceMemery.cash = priceMemery.cash.add(new BigDecimal(orderDetail.get("field-cash-amount")));
                             strategyStatus.completeTrade();
                            // final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             calTradeHandlers.execute(()->{
@@ -160,6 +171,8 @@ public class PriceStrategy implements NetTradeService {
                                         strategyStatus.todayCompleteTradeSetZero();
                                         //report.cleanMap();;
                                     }
+
+
                                 }catch (Exception e){
                                     logger.error("统计交易信息详情失败:",e);
                                 }
@@ -305,12 +318,24 @@ public class PriceStrategy implements NetTradeService {
             long orderId = apiNewClient.createOrder(createOrderReq);
             logger.warn("创建buyer订单话费时间:"+(System.currentTimeMillis()-beginTime) +" ms");
             String state = "";
+            boolean canTrade = true;
+
+            canTrade = priceMemery.cash.compareTo(new BigDecimal(createOrderReq.amount))>0;
+
+
+            if(!canTrade){
+                logger.warn("钱不够,请等待 cash:"+priceMemery.cash);
+                price_order.remove(price);
+                return ;
+            }
+
 
             if (priceUtil.isSatisfyTrading(PriceMemery.priceNow, price) && !priceUtil.isOverRishPriceOrLowPrice(
                 price)) {
                 beginTime = System.currentTimeMillis();
                 apiNewClient.executeOrder(orderId);
                 logger.warn("执行订单花费时间:"+(System.currentTimeMillis()-beginTime) +" ms");
+                priceMemery.cash = priceMemery.cash.subtract(new BigDecimal(createOrderReq.amount));
             } else {
                 orderId = 0L;
             }

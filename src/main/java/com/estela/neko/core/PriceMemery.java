@@ -23,6 +23,7 @@ public class PriceMemery {
 
     public volatile static int priceNow;
 
+    public volatile  BigDecimal cash;
 
 
     @Transient
