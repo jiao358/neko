@@ -237,6 +237,10 @@ public class PriceStrategy implements NetTradeService {
                             buyOrder.remove(orderId);
                          //   FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get("field-cash-amount"), orderDetail.get("field-fees"));
                             sell(price + strategyStatus.getFluctuation(), filledAmount,null);
+                        }else if("pre-submitted".equals(state)){
+                            logger.warn("订单执行时发生失败,不进行进一步重试,剔除出买入订单");
+                            buyOrder.remove(orderId);
+                            price_order.remove(price);
                         }
                     } catch (Exception e) {
                         logger.error("清除buyOrder 异常 订单:" + orderId, e);
