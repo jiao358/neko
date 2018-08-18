@@ -211,11 +211,17 @@ public class PriceStrategy implements NetTradeService {
 
                 buyOrder.forEach((orderId, price) -> {
                     try {
+                        if(!Diamond.canRunning){
+                            return ;
+                        }
+
                         Map<String,String> orderDetail =apiNewClient.getOrderInfoMap(String.valueOf(orderId));
                         if(MapUtils.isEmpty(orderDetail)){
                             logger.error("买入订单获取异常:"+orderId);
                             return;
                         }
+
+
                         String state = orderDetail.get("state");
                         logger.warn("确认购买订单号:" + orderId + "订单价格:" + price+"state:"+state);
                         if ("filled".equals(state)) {
@@ -239,7 +245,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
             }
-            , 1000, 100, TimeUnit.MILLISECONDS);
+            , 1000, 500, TimeUnit.MILLISECONDS);
 
     }
 
