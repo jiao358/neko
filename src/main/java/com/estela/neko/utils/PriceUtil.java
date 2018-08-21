@@ -47,12 +47,14 @@ public class PriceUtil {
 
     /**
      * 判断当前的价格是否超过预定阈值 或者低于预定阈值
+     * 新版 直接停止掉交易
      */
 
     public  boolean isOverRishPriceOrLowPrice(int priceNow){
         if(priceNow<strategyStatus.getHighriskPrice()&& priceNow>strategyStatus.getLowRisiPrice()){
             return false;
         }else {
+            Diamond.canRunning=false;
             return true;
         }
     }
