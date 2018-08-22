@@ -9,6 +9,7 @@ import com.estela.neko.core.PriceStrategy;
 import com.estela.neko.domain.Result;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -173,7 +174,7 @@ public class TradeSerivce {
      * @return
      */
     @RequestMapping("/setStrategy")
-    public Object setStrategy(String maxOrderSize,String diffPrice,String lowRisiPrice,String highriskPrice,String lotSize) {
+    public Object setStrategy(String maxOrderSize,String diffPrice,String lowRisiPrice,String highriskPrice,String lotSize,String emptyOrder) {
 
         Result result = new Result();
         if(!Diamond.canRunning){
@@ -193,6 +194,23 @@ public class TradeSerivce {
             if(!StringUtils.isEmpty(lotSize)){
                 tradeStatus.setLotSize(Double.parseDouble(lotSize));
             }
+
+            //增加清除空订单
+            if(!StringUtils.isEmpty(emptyOrder)){
+                Gson gson = new Gson();
+                Map<String, Double> map = new HashMap<String, Double>();
+                map = gson.fromJson(emptyOrder, map.getClass());
+
+                for(Map.Entry<String,Double> entry:map.entrySet()){
+                    String order = entry.getKey();
+                    Double price =entry.getValue();
+
+                    priceStrategy.deleteSellOrder(order,price.intValue()+"");
+                }
+
+            }
+
+
 
         }
 

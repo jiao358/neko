@@ -102,6 +102,12 @@ public class PriceStrategy implements NetTradeService {
         price_order.add(Integer.parseInt(price));
     }
 
+    public void deleteSellOrder(String order,String price){
+        sell_order.remove(price);
+        price_order.remove(Integer.parseInt(price)-100);
+        sellOrder.remove(Long.valueOf(order));
+    }
+
     /**
      * 老版本
      */
