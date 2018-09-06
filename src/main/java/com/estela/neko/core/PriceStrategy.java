@@ -272,7 +272,7 @@ public class PriceStrategy implements NetTradeService {
                         samePrice.put(price, new AtomicInteger(0));
                     }
                 }
-                if(occurTimes>30){
+                if(occurTimes>80){
                     Diamond.HUOBILog=true;
                 }
             }
