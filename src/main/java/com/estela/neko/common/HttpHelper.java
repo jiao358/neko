@@ -2,6 +2,7 @@ package com.estela.neko.common;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.estela.neko.config.Diamond;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -27,20 +28,27 @@ import java.util.Map;
 public class HttpHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(HttpHelper.class);
+    private static final Logger debugLogger = LoggerFactory.getLogger("HUOBI");
     @Autowired
     HttpConnectionManager manager;
-
+    int count =0;
     private final static BigDecimal rule = new BigDecimal(10000);
 
     public BigDecimal getPrice(String apiKey) {
         BigDecimal proPrice = null;
+        count++;
         try {
 
 
           /** String sendGet = sendGet("https://api.huobipro.com/market/trade",
                 "symbol=htusdt&AccessKeyId=" + apiKey);**/
          String sendGet = get("https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId="+apiKey);
-            logger.info("获取的价格数据结构:"+sendGet);
+         if(count>100 && Diamond.HUOBILog){
+             debugLogger.info("价格信息返回:"+sendGet);
+             count=0;
+         }
+
+
             JSONObject parseObject = JSON.parseObject(sendGet);
             proPrice = parseObject.getJSONObject("tick").getJSONArray("data").getJSONObject(0)
                 .getBigDecimal("price");
@@ -70,7 +78,6 @@ public class HttpHelper {
             httpGet.addHeader("Accept-Language", "zh-cn");
 
             HttpResponse response = httpClient.execute(httpGet);
-            logger.info("http get response:"+response);
             if (response != null) {
                 HttpEntity resEntity = response.getEntity();
                 if (resEntity != null) {

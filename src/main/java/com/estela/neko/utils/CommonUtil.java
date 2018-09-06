@@ -74,7 +74,7 @@ public class CommonUtil {
         systemModel.setBuyOrder(buyOrderList);
         systemModel.setSellOrder(sellOrderList);
         systemModel.setAlreadyDual(strategyStatus.getCompleteTrade());
-
+        systemModel.setGhost(Diamond.HUOBILog);
         // 进行费率计算
       /*  systemModel.setProfit(fundReport.getProfit());
         systemModel.setBuyFee(fundReport.getBuyFee());

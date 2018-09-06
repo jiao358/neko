@@ -69,6 +69,16 @@ public class SystemModel {
 
     private BigDecimal sellFee;
     private BigDecimal buyFee;
+    /**是否出现幽灵情况*/
+    private boolean ghost;
+
+    public boolean isGhost() {
+        return ghost;
+    }
+
+    public void setGhost(boolean ghost) {
+        this.ghost = ghost;
+    }
 
     public int getTodayTrade() {
         return todayTrade;

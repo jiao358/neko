@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.HttpConnectionManager;
 import com.estela.neko.huobi.request.CreateOrderRequest;
+import com.estela.neko.utils.LoggerUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -31,8 +32,8 @@ import java.util.stream.Collectors;
 @Service
 public class ApiNewClient {
 
-
     private static final Logger logger = LoggerFactory.getLogger(ApiNewClient.class);
+    private static final Logger debugLogger = LoggerFactory.getLogger("HUOBI");
     @Autowired
     HttpConnectionManager manager;
     static final String API_HOST = "api.huobi.pro";
@@ -41,6 +42,8 @@ public class ApiNewClient {
 
     String accessKeyId="205911d9-34c137a1-33ed938c-d9c12";
     String accessKeySecret="c35095b1-d25a11d6-a949a451-205a4";
+
+    int huobiCount = 0;
 
     /**
      * 执行订单
@@ -68,6 +71,7 @@ public class ApiNewClient {
                 HttpEntity resEntity = response.getEntity();
                 if (resEntity != null) {
                     result = EntityUtils.toString(resEntity, "utf-8");
+                    debugLogger.info("执行订单请求返回:"+result);
                     JSONObject ds = JSONObject.parseObject(result);
                     execute = ds.getString("data");
                 }

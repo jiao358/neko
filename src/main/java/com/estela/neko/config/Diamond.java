@@ -25,5 +25,7 @@ public class Diamond {
 
     public static AtomicBoolean sysFirstRun  = new AtomicBoolean(false);
 
+    public static boolean HUOBILog= false;
+
 
 }

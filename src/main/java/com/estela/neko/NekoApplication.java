@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class NekoApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(NekoApplication.class);
+
     public static void main(String[] args) {
         SpringApplication.run(NekoApplication.class, args);
         logger.info("Neko启动结束");
