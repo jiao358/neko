@@ -40,8 +40,8 @@ public class ApiNewClient {
 
     static final String API_URL = "https://" + API_HOST;
 
-    String accessKeyId="205911d9-34c137a1-33ed938c-d9c12";
-    String accessKeySecret="c35095b1-d25a11d6-a949a451-205a4";
+    public String accessKeyId;
+    public String accessKeySecret;
 
     int huobiCount = 0;
 
