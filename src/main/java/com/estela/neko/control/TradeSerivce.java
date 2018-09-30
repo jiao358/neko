@@ -56,6 +56,7 @@ public class TradeSerivce {
     public synchronized Object startSystem(String symbol) throws Exception {
         Result result = new Result();
         TradeDimension dimension = tradeModelFactory.getDimension(symbol);
+        logger.info("接收启动请求:symbol:"+symbol+"dimension sysFirstRun:"+dimension.getDiamond().sysFirstRun.get());
         if(!dimension.getDiamond().sysFirstRun.get()){
 
             dimension.getDiamond().canRunning=true;

@@ -41,6 +41,7 @@ public class TradeServiceAopSsl {
         Result result = new Result();
         try {
             String key =request.getSession().getId();
+            logger.info("获取key:"+key+"  是否已经登录:"+sessionControl);
             if(sessionControl.isLogin(key)){
                 Object o =  pjp.proceed();
                 result.setModel(o);
