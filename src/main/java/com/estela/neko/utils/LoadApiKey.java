@@ -66,7 +66,7 @@ public class LoadApiKey implements InitializingBean{
                 dimension.setTradeSemaphore(semaphore);
                 dimension.setCurrency(currency);
                 dimension.setTradeModelType(TradeModelType.valueOf(model));
-                PriceStrategy priceStrategy = new PriceStrategy();
+                PriceStrategy priceStrategy = new PriceStrategy(dimension);
                 priceStrategy.setApiNewClient(apiNewClient,httpHelper,commonUtil);
                 dimension.setPriceStrategy(priceStrategy);
                 tradeModelFactory.addDimention(dimension);

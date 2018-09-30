@@ -54,6 +54,10 @@ public class PriceStrategy implements NetTradeService {
         this.commonUtil = commonUtil;
     }
 
+    public PriceStrategy(TradeDimension dimension){
+        this.dimension= dimension;
+    }
+
     /**
      * 缓存accountId
      */
@@ -202,6 +206,8 @@ public class PriceStrategy implements NetTradeService {
             , 1000, 500, TimeUnit.MILLISECONDS);
 
     }
+
+
 
     private void reflashOrderFunction(Long orderId, Integer price){
         try {
