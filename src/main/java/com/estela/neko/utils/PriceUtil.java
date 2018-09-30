@@ -12,12 +12,10 @@ import org.springframework.stereotype.Service;
 /**
  * @author fuming.lj 2018/7/29
  **/
-@Service
 public class PriceUtil {
 
     private  static Logger logger = LoggerFactory.getLogger(PriceUtil.class);
 
-    @Autowired
     private  StrategyStatus strategyStatus;
 
     /**
@@ -45,57 +43,8 @@ public class PriceUtil {
         return result;
     }
 
-    /**
-     * 判断当前的价格是否超过预定阈值 或者低于预定阈值
-     * 新版 直接停止掉交易
-     */
-
-    public  boolean isOverRishPriceOrLowPrice(int priceNow){
-        if(priceNow<strategyStatus.getHighriskPrice()&& priceNow>strategyStatus.getLowRisiPrice()){
-            return false;
-        }else {
-            Diamond.canRunning=false;
-            return true;
-        }
-    }
-
-
-    /**
-     * 判断当前价格是否 满足交易策略
-     *
-     * @param currentPrice  当前价格
-     * @return
-     */
-    public  boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
-        int result = currentPrice-zhengdianPrice;
-        int diff = strategyStatus.getDiffPrice();
-        if(currentPrice==0){
-            return false;
-        }
-
-        if(Diamond.floatStrategy.equals(FloatEnu.ALL_FLOAT)){
-            if(result<=0 && result>= (-1*diff)){
-                return true;
-            }
-            if(result>=0 && result<=diff){
-                return true;
-            }
-        }
-
-        if(Diamond.floatStrategy.equals(FloatEnu.DOWN_FLOAT)){
-            if(result<=0 && result>= (-1*diff)){
-                return true;
-            }
-        }
-        if(Diamond.floatStrategy.equals(FloatEnu.UP_FLOAT)){
-
-            if(result>=0 && result<=diff){
-                return true;
-            }
-        }
 
 
 
-        return false;
-    }
+
 }

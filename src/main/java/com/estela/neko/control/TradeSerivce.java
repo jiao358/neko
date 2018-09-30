@@ -6,7 +6,9 @@ import com.estela.neko.common.HttpHelper;
 import com.estela.neko.common.StrategyStatus;
 import com.estela.neko.config.Diamond;
 import com.estela.neko.core.PriceStrategy;
+import com.estela.neko.core.TradeModelFactory;
 import com.estela.neko.domain.Result;
+import com.estela.neko.domain.TradeDimension;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.response.OrdersDetailResponse;
 import com.google.gson.Gson;
@@ -34,45 +36,42 @@ import java.util.Map;
 @RestController
 public class TradeSerivce {
     private static final Logger logger = LoggerFactory.getLogger(TradeSerivce.class);
-    @Autowired
-    StrategyStatus tradeStatus;
+
     @Autowired
     AccountModel accountModel;
     @Autowired
-    PriceStrategy priceStrategy;
+    TradeModelFactory factory;
 
     @Autowired
     HttpHelper helper;
     @Autowired
     ApiClient apiClient;
 
-    @RequestMapping("/price")
-    public Object getPrice() throws Exception {
+    @Autowired
+    TradeModelFactory tradeModelFactory;
 
-        Object ob = helper.get(
-            "https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId=" + "a7fd725a-502746cd-69b903fd-4418a");
-        return ob;
 
-    }
 
     @RequestMapping("/startSystem")
-    public synchronized Object startSystem() throws Exception {
+    public synchronized Object startSystem(String symbol) throws Exception {
         Result result = new Result();
-        if(!Diamond.sysFirstRun.get()){
+        TradeDimension dimension = tradeModelFactory.getDimension(symbol);
+        if(!dimension.getDiamond().sysFirstRun.get()){
 
-            Diamond.canRunning=true;
-            priceStrategy.execute();
-            Diamond.sysFirstRun.set(true);
+            dimension.getDiamond().canRunning=true;
+            dimension.getPriceStrategy().execute();
+            dimension.getDiamond().sysFirstRun.set(true);
         }else{
-            Diamond.canRunning=true;
+            dimension.getDiamond().canRunning=true;
         }
         return result;
 
     }
     @RequestMapping("/stopSystem")
-    public Object stopSystem() throws Exception {
+    public Object stopSystem(String symbol) throws Exception {
         Result result = new Result();
-        Diamond.canRunning=false;
+        TradeDimension dimension = tradeModelFactory.getDimension(symbol);
+        dimension.getDiamond().canRunning=false;
         return result;
 
     }
@@ -88,84 +87,27 @@ public class TradeSerivce {
 
     }
 
-    @RequestMapping("/priceInfo")
-    public Object getPriceInfo() {
-        Map map = new HashMap();
 
-        map.put("price_order:", JSONObject.toJSON(priceStrategy.price_order));
-        map.put("sell_order:", JSONObject.toJSON(priceStrategy.sell_order));
-        return JSONObject.toJSON(map);
-
-    }
 
     @RequestMapping("/setAmount")
     public Object setAmount(String amount) {
         return "";
     }
 
-    @RequestMapping("/setProperties")
-    public StrategyStatus setProperties(String highriskPrice, String maxOrderSize, String lotSize, String diffPrice,
-                                        String lowPrice) {
-        try {
-            if (!StringUtils.isEmpty(highriskPrice)) {
-                //乘以10000 以上
-                tradeStatus.setHighriskPrice(Integer.parseInt(highriskPrice));
-            }
 
-            if (!StringUtils.isEmpty(lowPrice)) {
-                //乘以10000 以上
-                tradeStatus.setHighriskPrice(Integer.parseInt(lowPrice));
-            }
 
-            if (!StringUtils.isEmpty(maxOrderSize)) {
 
-                tradeStatus.setMaxOrderSize(Integer.valueOf(maxOrderSize));
-            }
-            if (!StringUtils.isEmpty(lotSize)) {
-
-                tradeStatus.setLotSize(Double.valueOf(lotSize));
-            }
-
-            if (!StringUtils.isEmpty(diffPrice)) {
-
-                tradeStatus.setDiffPrice(Integer.valueOf(diffPrice));
-            }
-
-        } catch (Exception e) {
-            logger.error("设置参数错误", e);
-            tradeStatus.setSysMsg("设置参数非法");
-        }
-
-        return tradeStatus;
-    }
-
-    @RequestMapping("/look")
-    public StrategyStatus queryStatus() {
-        return tradeStatus;
-    }
-
-    @RequestMapping("/go")
-    public StrategyStatus go(String startOrder) {
-        if (!StringUtils.isEmpty(startOrder)) {
-            tradeStatus.setStartOrder(new BigDecimal(startOrder));
-        }
-        accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
-        tradeStatus.setTrading(true);
-        priceStrategy.execute();
-
-        return tradeStatus;
-    }
 
     /**
      * 暂停执行 当前价格服务
      * @return
      */
     @RequestMapping("/stopPriceService")
-    public StrategyStatus stopPriceService() {
+    public StrategyStatus stopPriceService(String symbol) {
+        TradeDimension dimension = tradeModelFactory.getDimension(symbol);
+        dimension.getDiamond().canRunning=false;
 
-        Diamond.canRunning=false;
-
-        return tradeStatus;
+        return dimension.getStrategyStatus();
     }
 
 
@@ -174,25 +116,25 @@ public class TradeSerivce {
      * @return
      */
     @RequestMapping("/setStrategy")
-    public Object setStrategy(String maxOrderSize,String diffPrice,String lowRisiPrice,String highriskPrice,String lotSize,String emptyOrder) {
-
+    public Object setStrategy(String symbol,String maxOrderSize,String diffPrice,String lowRisiPrice,String highriskPrice,String lotSize,String emptyOrder,String reflashOrder) {
+        TradeDimension dimension = tradeModelFactory.getDimension(symbol);
         Result result = new Result();
-        if(!Diamond.canRunning){
+        if(!dimension.getDiamond().canRunning){
             if(!StringUtils.isEmpty(maxOrderSize)){
-                tradeStatus.setMaxOrderSize(Integer.parseInt(maxOrderSize));
+                dimension.getStrategyStatus().setMaxOrderSize(Integer.parseInt(maxOrderSize));
             }
 
             if(!StringUtils.isEmpty(diffPrice)){
-                tradeStatus.setDiffPrice(Integer.parseInt(diffPrice));
+                dimension.getStrategyStatus().setDiffPrice(Integer.parseInt(diffPrice));
             }
             if(!StringUtils.isEmpty(lowRisiPrice)){
-                tradeStatus.setLowRisiPrice(Integer.parseInt(lowRisiPrice));
+                dimension.getStrategyStatus().setLowRisiPrice(Integer.parseInt(lowRisiPrice));
             }
             if(!StringUtils.isEmpty(highriskPrice)){
-                tradeStatus.setHighriskPrice(Integer.parseInt(highriskPrice));
+                dimension.getStrategyStatus().setHighriskPrice(Integer.parseInt(highriskPrice));
             }
             if(!StringUtils.isEmpty(lotSize)){
-                tradeStatus.setLotSize(Double.parseDouble(lotSize));
+                dimension.getStrategyStatus().setLotSize(Double.parseDouble(lotSize));
             }
 
             //增加清除空订单
@@ -205,10 +147,28 @@ public class TradeSerivce {
                     String order = entry.getKey();
                     Double price =entry.getValue();
 
-                    priceStrategy.deleteSellOrder(order,price.intValue()+"");
+                    dimension.getPriceStrategy().deleteSellOrder(order,price.intValue()+"");
                 }
 
             }
+            //增加可以全量刷新订单的能力
+            if(!StringUtils.isEmpty(reflashOrder)){
+                Gson gson = new Gson();
+                Map<String, Double> map = new HashMap<String, Double>();
+                map = gson.fromJson(emptyOrder, map.getClass());
+
+                for(Map.Entry<String,Double> entry:map.entrySet()){
+                    String order = entry.getKey();
+                    Double price =entry.getValue();
+
+                    dimension.getPriceStrategy().reflashOrder(order,price.intValue()+"");
+                }
+
+
+            }
+
+
+
 
 
 
@@ -225,32 +185,14 @@ public class TradeSerivce {
      * @return
      */
     @RequestMapping("/startPriceService")
-    public StrategyStatus startPriceService() {
+    public StrategyStatus startPriceService(String symbol) {
+        TradeDimension dimension = tradeModelFactory.getDimension(symbol);
+        dimension.getDiamond().canRunning=true;
 
-        Diamond.canRunning=true;
-
-        return tradeStatus;
+        return dimension.getStrategyStatus();
     }
 
-    @RequestMapping("/start")
-    public StrategyStatus start(@RequestParam(required = true) String accessKey,
-                                @RequestParam(required = true) String securityKey, BigDecimal startOrderPrice) {
-        if (StringUtils.isEmpty(accessKey) || StringUtils.isEmpty(securityKey)) {
-            tradeStatus.setSysMsg("输入参数异常,请检查重试");
-            logger.error("输入参数有误:" + accessKey + ":" + accessKey + ",securityKey:" + securityKey);
-            return tradeStatus;
-        }
-        if (tradeStatus.getTrading()) {
-            logger.info("系统已经启动");
-            return tradeStatus;
-        }
-        tradeStatus.setStartOrder(startOrderPrice);
-        accountModel.setKey(accessKey, securityKey);
-        tradeStatus.setTrading(true);
-        //priceStrategy.startReflashPrice();
 
-        return tradeStatus;
-    }
 
     @RequestMapping("/api")
     public String helloWorld() {

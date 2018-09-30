@@ -3,6 +3,7 @@ package com.estela.neko.common;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.config.Diamond;
+import com.estela.neko.core.TradeModelFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -20,6 +21,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author fuming.lj 2018/7/23
@@ -31,21 +33,30 @@ public class HttpHelper {
     private static final Logger debugLogger = LoggerFactory.getLogger("HUOBI");
     @Autowired
     HttpConnectionManager manager;
-    int count =0;
+    @Autowired
+    TradeModelFactory factory;
+    private ThreadLocal<AtomicInteger> countLocal = new ThreadLocal<>();
     private final static BigDecimal rule = new BigDecimal(10000);
 
-    public BigDecimal getPrice(String apiKey) {
+    public BigDecimal getPrice(String apiKey,String symbol) {
         BigDecimal proPrice = null;
-        count++;
         try {
+            int count =0;
+            if(countLocal.get()!=null){
+                count=countLocal.get().incrementAndGet();
+            }else{
+                AtomicInteger cc= new AtomicInteger();
+                countLocal.set(cc);
+            }
+
 
 
           /** String sendGet = sendGet("https://api.huobipro.com/market/trade",
                 "symbol=htusdt&AccessKeyId=" + apiKey);**/
-         String sendGet = get("https://api.huobipro.com/market/trade?symbol=htusdt&AccessKeyId="+apiKey);
-         if(count>100 && Diamond.HUOBILog){
-             debugLogger.info("价格信息返回:"+sendGet);
-             count=0;
+         String sendGet = get("https://api.huobipro.com/market/trade?symbol="+symbol+"&AccessKeyId="+apiKey,symbol);
+         if(count>100 || factory.getDimension(symbol).getDiamond().HUOBILog){
+             debugLogger.info(symbol+" 价格信息返回:"+sendGet);
+             countLocal.get().set(0);
          }
 
 
@@ -56,13 +67,13 @@ public class HttpHelper {
             proPrice = proPrice.multiply(rule);
 
         } catch (Exception e) {
-            logger.error("查询最新价格失败", e);
+            logger.error(symbol+" 货币查询最新价格失败", e);
         }
 
         return proPrice;
     }
 
-    public String get(String urlNameString) throws Exception {
+    public String get(String urlNameString,String symbol) throws Exception {
 
         String result = null;
         try {
@@ -85,7 +96,7 @@ public class HttpHelper {
                 }
             }
         } catch (Exception ex) {
-            logger.error("调用价格查询接口失败:", ex);
+            logger.error(symbol+" 调用价格查询接口失败:", ex);
         }
         return result;
 

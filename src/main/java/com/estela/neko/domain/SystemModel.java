@@ -10,6 +10,8 @@ import java.util.Set;
  * 页面展示逻辑
  **/
 public class SystemModel {
+    private String symbol;
+
     /**当前价格**/
     private int currentPrice;
     /**当前系统运行性状态*/
@@ -55,7 +57,7 @@ public class SystemModel {
     /**
      * usdt 以及ht 余额
      */
-    private BigDecimal usdtNow;
+    private BigDecimal usdtNow = new BigDecimal(0);
 
     private BigDecimal usdtFrozen;
 
@@ -71,6 +73,14 @@ public class SystemModel {
     private BigDecimal buyFee;
     /**是否出现幽灵情况*/
     private boolean ghost;
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
 
     public boolean isGhost() {
         return ghost;

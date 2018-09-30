@@ -1,18 +1,9 @@
 package com.estela.neko.core;
 
-import com.estela.neko.common.StrategyStatus;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.annotation.Transient;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * @author fuming.lj 2018/7/23
@@ -21,14 +12,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 @Service
 public class PriceMemery {
 
-    public volatile static int priceNow;
+    public volatile  int priceNow;
 
     public volatile  BigDecimal cash;
 
 
-    @Transient
-    @Autowired
-    StrategyStatus strategyStatus;
     /**
      * 该价格已经乘以了10000
      */

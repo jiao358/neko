@@ -15,17 +15,17 @@ public class Diamond {
     /**
      * 用于控制 流程交易是否能够执行
      */
-    public static volatile  boolean canRunning= false;
+    public  volatile  boolean canRunning= false;
 
     /**
      * 使用哪种 价格浮动策略
      */
 
-    public static volatile FloatEnu floatStrategy = FloatEnu.DOWN_FLOAT;
+    public  volatile FloatEnu floatStrategy = FloatEnu.DOWN_FLOAT;
 
-    public static AtomicBoolean sysFirstRun  = new AtomicBoolean(false);
+    public  AtomicBoolean sysFirstRun  = new AtomicBoolean(false);
 
-    public static boolean HUOBILog= false;
+    public  boolean HUOBILog= false;
 
 
 }

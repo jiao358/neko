@@ -7,7 +7,7 @@
 <script type="text/javascript" src="http://libs.baidu.com/jquery/1.8.3/jquery.js"></script>
 <script>
 
-
+var currency;
     $(function () {
 
         $('#tradeStatus').val(1234);
@@ -21,6 +21,9 @@
             success: function (text) {
                 if (text.success) {
                     const model = text.model;
+                    currency =model.symbol;
+                    $('#curr').html(model.symbol);
+                    $("input[name='symbol']").val(currency);
                     $('#running').val(model.running);
                     $('#currentPrice').val(model.currentPrice);
                     $('#lotSize').val(model.lotSize);
@@ -55,7 +58,7 @@
 
     function startSystem() {
         $.ajax({
-            url: "/tradeService/startSystem",
+            url: "/tradeService/startSystem?symbol="+currency,
             data: {
                 username: "xxx"
             },
@@ -77,7 +80,7 @@
 
     function stopSystem() {
         $.ajax({
-            url: "/tradeService/stopSystem",
+            url: "/tradeService/stopSystem?symbol="+currency,
             data: {
                 username: "xxx"
             },
@@ -145,7 +148,7 @@
 </script>
 <body>
 <div style="align:center">
-    <h1>交易系统运行状态</h1>
+    <h1>当前交易货币:<b id="curr"></b></h1>
     <table style="text-align:center">
         <tr>
             <td>系统状态:</td>
@@ -242,7 +245,7 @@
 
                 <table style="text-align:center">
                     <tr>------------修改交易策略网格------------</tr>
-
+                    <input type="text"  hidden="true" name="symbol"/>
                     <tr>
                         <td>最多持有订单数：</td>
                         <td><input type="text" name="maxOrderSize"/></td>
@@ -269,6 +272,10 @@
                         <td><input type="text" name="emptyOrder"/></td>
                     </tr>
                     <tr>
+                        <td>刷新订单交易情况</td>
+                        <td><input type="text" name="reflashOrder"/></td>
+                    </tr>
+                    <tr>
                         <td colspan="2">
                             <button type="button" onclick="modeifyStrategy()">提交修改</button>
                         </td>
@@ -286,7 +293,7 @@
         <tr>
             <form id="initPrice" action="/tradeInfo/setOrderInfo" method="post">
 
-
+                <input  hidden="true" name="symbol"/>
                 <table style="text-align:center">
                     <tr>------------导入未完成订单------------</tr>
 

@@ -30,6 +30,8 @@ public class UserHelper {
     @Autowired
     AccountModel accountModel;
 
+    public static String symbol ="htusdt";
+
     @GetMapping("/")
     public String index( String account, Model model) {
         model.addAttribute("name", account);
@@ -40,12 +42,32 @@ public class UserHelper {
     public String loginOn(String username, String password, HttpSession session) {
         if("estelasu".equals(username)&& "qaz8893".equals(password)){
             sessionControl.addSession(session.getId());
-            return "forward:/system";
+            return "forward:/select";
 
         }else{
             return "noLogin";
         }
     }
+
+    @PostMapping("/select")
+    public String selectCurrency(){
+
+        return "SelectPage";
+    }
+
+    @PostMapping("/afterSelect")
+    public String afterSelect(String userSelect ,HttpSession session){
+        session.setAttribute("userCurrency",userSelect);
+        String key=session.getId();
+        if(sessionControl.isLogin(key)){
+            return "forward:/system";
+        }else{
+            return "noLogin";
+        }
+    }
+
+
+
     @PostMapping("/system")
     public String systemStatus(){
 

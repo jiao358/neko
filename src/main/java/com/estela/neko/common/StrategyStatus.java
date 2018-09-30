@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author fuming.lj 2018/7/23
  **/
-@Service
 public class StrategyStatus {
 
     private Boolean trading = false;

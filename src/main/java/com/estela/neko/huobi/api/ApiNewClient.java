@@ -3,8 +3,8 @@ package com.estela.neko.huobi.api;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.HttpConnectionManager;
+import com.estela.neko.domain.TradeDimension;
 import com.estela.neko.huobi.request.CreateOrderRequest;
-import com.estela.neko.utils.LoggerUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -40,8 +40,6 @@ public class ApiNewClient {
 
     static final String API_URL = "https://" + API_HOST;
 
-    public String accessKeyId;
-    public String accessKeySecret;
 
     int huobiCount = 0;
 
@@ -49,12 +47,12 @@ public class ApiNewClient {
      * 执行订单
      * @return
      */
-    public String executeOrder(long orderId){
+    public String executeOrder(long orderId, TradeDimension dimension){
         String uri ="/v1/order/orders/" + orderId + "/place";
 
         ApiSignature sign = new ApiSignature();
         Map<String,String> access =new HashMap<>();
-        sign.createSignature(this.accessKeyId, this.accessKeySecret, "POST", API_HOST, uri, access);
+        sign.createSignature(dimension.getApiKey(), dimension.getSecurityKey(), "POST", API_HOST, uri, access);
         String execute="";
         try {
             CloseableHttpClient httpClient = manager.getHttpClient();
@@ -94,12 +92,12 @@ public class ApiNewClient {
      * 用于创建订单
      * @return
      */
-    public Long createOrder(CreateOrderRequest request){
+    public Long createOrder(CreateOrderRequest request ,TradeDimension dimension){
         String uri = "/v1/order/orders";
         Map<String,String> access =new HashMap<>();
 
         ApiSignature sign = new ApiSignature();
-        sign.createSignature(this.accessKeyId, this.accessKeySecret, "POST", API_HOST, uri, access);
+        sign.createSignature(dimension.getApiKey(), dimension.getSecurityKey(), "POST", API_HOST, uri, access);
         long order=0L;
         try {
             CloseableHttpClient httpClient = manager.getHttpClient();
@@ -138,13 +136,13 @@ public class ApiNewClient {
      * @return
      * @throws Exception
      */
-    public Map<String,String> getOrderInfoMap(String orderId) throws Exception {
+    public Map<String,String> getOrderInfoMap(String orderId,TradeDimension dimension) throws Exception {
         ApiSignature sign = new ApiSignature();
         String uri="/v1/order/orders/" + orderId;
         Map<String,String> param = new HashMap<>();
         Map<String, String> map = new HashMap<>();
         try {
-            sign.createSignature(this.accessKeyId, this.accessKeySecret, "GET", API_HOST, uri, param);
+            sign.createSignature(dimension.getApiKey(), dimension.getSecurityKey(), "GET", API_HOST, uri, param);
             CloseableHttpClient httpClient = manager.getHttpClient();
             String result = "";
             HttpGet httpGet = new HttpGet(API_URL + uri + "?" + toQueryString(param));
@@ -178,12 +176,28 @@ public class ApiNewClient {
 
     }
 
-    public List<JSONObject> getAccountAmount(int orderId) throws Exception {
-        String uri="/v1/account/accounts/"+orderId+"/balance";
+    public String getAccounts(TradeDimension dimension){
+        String uri="/v1/account/accounts";
+        Map<String,String> param = new HashMap<>();
+        JSONObject  ds = JSONObject.parseObject(get(uri,param,dimension));
+        String success = ds.getString("status");
+        if(success.equals("ok")){
+            JSONArray array=  ds.getJSONArray("data");
+            JSONObject objt=array.getJSONObject(0);
+            String accountId =objt.getString("id");
+            return accountId;
+
+        }
+        return "";
+    }
+
+
+    public List<JSONObject> getAccountAmount(int accounts,String currency,TradeDimension dimension) throws Exception {
+        String uri="/v1/account/accounts/"+accounts+"/balance";
         Map<String,String> param = new HashMap<>();
 
 
-        JSONObject  ds = JSONObject.parseObject(get(uri,param));
+        JSONObject  ds = JSONObject.parseObject(get(uri,param,dimension));
         List<JSONObject> result = new ArrayList();
         String success = ds.getString("status");
         if(success.equals("ok")){
@@ -193,26 +207,20 @@ public class ApiNewClient {
                 linkedList.add(array.getJSONObject(i));
 
             }
-
+    //usdt为基础货币   currency为法币
             linkedList.forEach(domain->{
-                if(domain.getString("currency").equals("usdt") || "ht".equals(domain.getString("currency"))){
+                if(domain.getString("currency").equals("usdt") || currency.equals(domain.getString("currency"))){
                     result.add(domain);
                 }
             });
-
         }
-
-
-
-
         return result;
-
     }
 
 
-    String get(String uri,Map<String,String > param ){
+    String get(String uri,Map<String,String > param ,TradeDimension dimension){
         ApiSignature sign = new ApiSignature();
-        sign.createSignature(this.accessKeyId, this.accessKeySecret, "GET", API_HOST, uri, param);
+        sign.createSignature(dimension.getApiKey(), dimension.getSecurityKey(), "GET", API_HOST, uri, param);
         CloseableHttpClient httpClient = manager.getHttpClient();
         String result="";
         try{

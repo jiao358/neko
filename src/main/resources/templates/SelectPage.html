@@ -1,0 +1,52 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>货币选择</title>
+
+    <script type="text/javascript" src="http://libs.baidu.com/jquery/1.8.3/jquery.js"></script>
+    <script>
+        //进行货币对的获取
+        $(function(){
+            $.ajax({
+                url: "/tradeInfo/getCurrency",
+                data: {
+                    username: "xxx"
+                },
+                type: "get",
+                dataType: "json",
+                success: function (json) {
+                    if (json.success) {
+                        var currencys = json.model.currencys;
+                        try{
+                            var array =currencys.length;
+
+                            for(var i=0;i<array;i++){
+                                $("#currencySelect").append("<option value="+currencys[i]+">"+currencys[i]+"</option>");
+                            }
+
+                        }catch(e){
+                            alert(e);
+                        }
+
+                    }
+
+                }
+            });
+        })
+
+    </script>
+</head>
+<body>
+<h1 style="text-align:center">欢迎进入Neko 请选择当前支持货币对</h1>
+
+<form action="/afterSelect" method="post">
+    <center>
+        当前支持的货币:
+    <select  id="currencySelect" name="userSelect"></select>
+    <button type="submit"> 确认进入</button>
+    </center>
+</form>
+
+
+</body>
+</html>

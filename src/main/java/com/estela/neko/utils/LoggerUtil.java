@@ -13,16 +13,4 @@ import org.springframework.stereotype.Service;
 public class LoggerUtil {
     private static final Logger logger = LoggerFactory.getLogger("HUOBI");
 
-    public void info(String message){
-        if(Diamond.HUOBILog){
-            logger.info(message);
-        }
-    }
-
-
-    public void error(String message,Throwable e){
-        if(Diamond.HUOBILog){
-            logger.error(message,e);
-        }
-    }
 }

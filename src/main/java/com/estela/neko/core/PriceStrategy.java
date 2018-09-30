@@ -1,24 +1,22 @@
 package com.estela.neko.core;
 
+import com.estela.neko.Enutype.FloatEnu;
 import com.estela.neko.api.NetTradeService;
-import com.estela.neko.common.*;
-import com.estela.neko.config.Diamond;
+import com.estela.neko.common.FundDomain;
+import com.estela.neko.common.HttpHelper;
 import com.estela.neko.domain.SystemModel;
+import com.estela.neko.domain.TradeDimension;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.api.ApiNewClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
-import com.estela.neko.huobi.response.OrdersDetailResponse;
 import com.estela.neko.utils.CommonUtil;
-import com.estela.neko.utils.PriceUtil;
-import org.omg.PortableServer.THREAD_POLICY_ID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.thymeleaf.expression.Maps;
 import org.thymeleaf.util.MapUtils;
+import org.thymeleaf.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -31,32 +29,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author fuming.lj 2018/7/23 进行价格刷新的策略
  **/
-@Service
+
 public class PriceStrategy implements NetTradeService {
     private static final Logger logger = LoggerFactory.getLogger(PriceStrategy.class);
-    @Autowired
-    PriceMemery priceMemery;
-    @Autowired
-    AccountModel accountModel;
-    @Autowired
-    ApiNewClient apiNewClient;
-    @Autowired
-    StrategyStatus strategyStatus;
-    @Autowired
-    HttpHelper httpHelper;
-    @Autowired
-    PriceUtil priceUtil;
-    @Autowired
-    ApiClient apiClient;
+    private TradeDimension dimension ;
 
-    @Autowired
+    ApiNewClient apiNewClient;
+
+    HttpHelper httpHelper;
+
     CommonUtil commonUtil;
 
     private volatile String currentDate;
+
+    public volatile  int priceNow;
+
+    public volatile  BigDecimal cash ;
+
+
+    public void setApiNewClient(ApiNewClient apiNewClient,HttpHelper httpHelper,CommonUtil commonUtil){
+        this.apiNewClient = apiNewClient;
+        this.httpHelper = httpHelper;
+        this.commonUtil = commonUtil;
+    }
+
     /**
      * 缓存accountId
      */
-    private volatile long accountId = 4267079L;
+    //private volatile long accountId = 4267079L;
 
     private ScheduledExecutorService scheduleReflash = new ScheduledThreadPoolExecutor(1);
 
@@ -67,7 +67,7 @@ public class PriceStrategy implements NetTradeService {
 
     private Executor executor = Executors.newFixedThreadPool(1);
     private Executor calTradeHandlers = Executors.newFixedThreadPool(1);
-    private Executor reportHandler = Executors.newFixedThreadPool(1);
+
 
     public Set<Integer> price_order = Collections.synchronizedSet(new HashSet());
     public Set<Integer> sell_order = Collections.synchronizedSet(new HashSet());
@@ -78,17 +78,12 @@ public class PriceStrategy implements NetTradeService {
 
     public Object lock = new Object();
 
-    private int startPrice;
-    private int lastBuyPrice;
-    private int lastSellPrice;
-
-    public static int cash = 0 * 10000;
-    public static final int priceLimit = 300;
+    public  final int priceLimit = 300;
 
     public int logTime = 0;
 
     public int sellLogTime = 0;
-    public volatile static  int lastPrice= 0;
+    public volatile   int lastPrice= 0;
 
     Map<Integer, AtomicInteger> samePrice = new HashMap<>();
 
@@ -109,21 +104,26 @@ public class PriceStrategy implements NetTradeService {
         sellOrder.remove(Long.valueOf(order));
     }
 
+    public void reflashOrder(String order,String price){
+        reflashOrderFunction(Long.valueOf(order),Integer.valueOf(price));
+
+    }
+
     /**
-     * 老版本
+     *
      */
     public void startTradePrice() {
 
-        SystemModel systemModel = commonUtil.generateCurrentModel();
-        priceMemery.cash = systemModel.getUsdtNow();
+        SystemModel systemModel = commonUtil.generateCurrentModel(dimension.getTradeSemaphore());
+        cash = systemModel.getUsdtNow();
 
         scheduleReflash.scheduleWithFixedDelay(() -> {
             try {
-                BigDecimal currentPrice = httpHelper.getPrice(accountModel.getApiKey());
+                BigDecimal currentPrice = httpHelper.getPrice(dimension.getApiKey(),dimension.getTradeSemaphore());
                 if (currentPrice == null) {
                     return;
                 }
-                PriceMemery.priceNow = currentPrice.intValue();
+                priceNow = currentPrice.intValue();
 
 
             } catch (Exception e) {
@@ -140,63 +140,13 @@ public class PriceStrategy implements NetTradeService {
                 sellLogTime++;
 
                 sellOrder.forEach((orderId, price) -> {
-                    try {
-                        if (PriceMemery.priceNow + priceLimit < price) {
+                    if (priceNow + priceLimit < price) {
 
-                            return;
-                        }
-
-                        long beginTime = System.currentTimeMillis();
-
-                        Map<String, String> orderDetail = apiNewClient.getOrderInfoMap(String.valueOf(orderId));
-                        long castTime = System.currentTimeMillis() - beginTime;
-                        if (sellLogTime > 80) {
-                            logger.info("SellOrder 查询订单信息需要:" + (castTime) + "ms  orderId:" + orderId + " price:" +
-                                price);
-                        }
-                        if (MapUtils.isEmpty(orderDetail)) {
-                            logger.info("售出订单获取异常:" + orderId);
-                            return;
-                        }
-                        String state = orderDetail.get("state");
-                        if ("filled".equals(state)) {
-                            logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:" + orderDetail.get
-                                ("data"));
-                            priceMemery.cash = priceMemery.cash.add(new BigDecimal(orderDetail.get
-                                ("field-cash-amount")));
-                            strategyStatus.completeTrade();
-                            // final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get
-                            // ("field-cash-amount"), orderDetail.get("field-fees"));
-                            calTradeHandlers.execute(() -> {
-                                try {
-                                    String time = getChinaTime();
-                                    if (currentDate.equals(time)) {
-                                        strategyStatus.todayCompleteTrade();
-                                    } else {
-                                        currentDate = time;
-                                        strategyStatus.todayCompleteTradeSetZero();
-                                        //report.cleanMap();;
-                                    }
-
-                                } catch (Exception e) {
-                                    logger.error("统计交易信息详情失败:", e);
-                                }
-
-                            });
-
-                            sell_order.remove(price);
-                            price_order.remove(price - 100);
-                            sellOrder.remove(orderId);
-
-                            executor.execute(() -> {
-                                buyMarket(price);
-                            });
-
-                        }
-
-                    } catch (Exception e) {
-                        logger.error("清除sellOrder 异常 订单:" + orderId, e);
+                        return;
                     }
+                    reflashOrderFunction(orderId,price);
+
+
 
                 });
                 if (sellLogTime > 80) {
@@ -210,11 +160,11 @@ public class PriceStrategy implements NetTradeService {
 
                 buyOrder.forEach((orderId, price) -> {
                     try {
-                        if (!Diamond.canRunning) {
+                        if (!dimension.getDiamond().canRunning) {
                             return;
                         }
 
-                        Map<String, String> orderDetail = apiNewClient.getOrderInfoMap(String.valueOf(orderId));
+                        Map<String, String> orderDetail = apiNewClient.getOrderInfoMap(String.valueOf(orderId),dimension);
                         if (MapUtils.isEmpty(orderDetail)) {
                             logger.info("买入订单获取异常:" + orderId);
                             return;
@@ -235,7 +185,7 @@ public class PriceStrategy implements NetTradeService {
                             buyOrder.remove(orderId);
                             //   FundDomain buyerFundDomain = new FundDomain(orderId,orderDetail.get
                             // ("field-cash-amount"), orderDetail.get("field-fees"));
-                            sell(price + strategyStatus.getFluctuation(), filledAmount, null);
+                            sell(price + dimension.getStrategyStatus().getFluctuation(), filledAmount, null);
                         } else if ("pre-submitted".equals(state)) {
                             logger.info("订单执行时发生失败,不进行进一步重试,剔除出买入订单");
                             buyOrder.remove(orderId);
@@ -252,10 +202,68 @@ public class PriceStrategy implements NetTradeService {
 
     }
 
+    private void reflashOrderFunction(Long orderId, Integer price){
+        try {
+
+
+            long beginTime = System.currentTimeMillis();
+
+            Map<String, String> orderDetail = apiNewClient.getOrderInfoMap(String.valueOf(orderId),dimension);
+            long castTime = System.currentTimeMillis() - beginTime;
+            if (sellLogTime > 80) {
+                logger.info("SellOrder 查询订单信息需要:" + (castTime) + "ms  orderId:" + orderId + " price:" +
+                    price);
+            }
+            if (MapUtils.isEmpty(orderDetail)) {
+                logger.info("售出订单获取异常:" + orderId);
+                return;
+            }
+            String state = orderDetail.get("state");
+            if ("filled".equals(state)) {
+                logger.info("空单，价格约" + price + "点，订单号:" + orderId + ",完全成交,data:" + orderDetail.get
+                    ("data"));
+                cash = cash.add(new BigDecimal(orderDetail.get
+                    ("field-cash-amount")));
+                dimension.getStrategyStatus().completeTrade();
+                // final FundDomain sellFundomain = new FundDomain(orderId,orderDetail.get
+                // ("field-cash-amount"), orderDetail.get("field-fees"));
+                calTradeHandlers.execute(() -> {
+                    try {
+                        String time = getChinaTime();
+                        if (currentDate.equals(time)) {
+                            dimension.getStrategyStatus().todayCompleteTrade();
+                        } else {
+                            currentDate = time;
+                            dimension.getStrategyStatus().todayCompleteTradeSetZero();
+                            //report.cleanMap();;
+                        }
+
+                    } catch (Exception e) {
+                        logger.error("统计交易信息详情失败:", e);
+                    }
+
+                });
+
+                sell_order.remove(price);
+                price_order.remove(price - 100);
+                sellOrder.remove(orderId);
+
+                executor.execute(() -> {
+                    buyMarket(price);
+                });
+
+            }
+
+        } catch (Exception e) {
+            logger.error("清除sellOrder 异常 订单:" + orderId, e);
+        }
+
+    }
+
     public void checkBuyMarket() {
         logTime++;
-        int currentAppPrice = PriceMemery.priceNow;
-        int step = strategyStatus.getFluctuation();
+        int currentAppPrice = priceNow;
+        int step = dimension.getStrategyStatus().getFluctuation();
         int price = currentAppPrice / step * step;
         boolean access = currentAppPrice == price;
         if (logTime > 120) {
@@ -265,24 +273,25 @@ public class PriceStrategy implements NetTradeService {
                 lastPrice = currentAppPrice;
             }else{
                 int occurTimes = 0;
-                if(!Diamond.HUOBILog){
+                if(!dimension.getDiamond().HUOBILog){
                     if (samePrice.get(lastPrice) != null) {
                         occurTimes = samePrice.get(price).incrementAndGet();
                     } else {
+                        samePrice.clear();
                         samePrice.put(price, new AtomicInteger(0));
                     }
                 }
                 if(occurTimes>80){
-                    Diamond.HUOBILog=true;
+                    dimension.getDiamond().HUOBILog=true;
                 }
             }
 
         }
         if (access && price != 0) {
             if (!sell_order.contains(price + step) && !price_order.contains(price)) {
-                logger.warn("满足准入条件:" + (!isOverHandLimit() && Diamond.canRunning));
+                logger.warn("满足准入条件:" + (!isOverHandLimit() && dimension.getDiamond().canRunning));
 
-                if (!isOverHandLimit() && Diamond.canRunning) {
+                if (!isOverHandLimit() && dimension.getDiamond().canRunning) {
                     buyMarket(price);
                 }
 
@@ -298,7 +307,7 @@ public class PriceStrategy implements NetTradeService {
     public boolean isOverHandLimit() {
         int olderSize = price_order.size();
         int sellSize = sell_order.size();
-        if (olderSize >= strategyStatus.getMaxOrderSize() || sellSize >= strategyStatus.getMaxOrderSize()) {
+        if (olderSize >= dimension.getStrategyStatus().getMaxOrderSize() || sellSize >= dimension.getStrategyStatus().getMaxOrderSize()) {
             return true;
         } else {
             return false;
@@ -330,39 +339,39 @@ public class PriceStrategy implements NetTradeService {
             // create order:
             long beginTime = System.currentTimeMillis();
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
-            createOrderReq.accountId = String.valueOf(accountId);
-            createOrderReq.amount = Double.toString(strategyStatus.getLotSize() * (double)price / 10000);
+            createOrderReq.accountId = String.valueOf(dimension.getAccountId());
+            createOrderReq.amount = Double.toString(dimension.getStrategyStatus().getLotSize() * (double)price / 10000);
 
-            createOrderReq.symbol = "htusdt";
+            createOrderReq.symbol = dimension.getTradeSemaphore();//"htusdt";
             createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
             createOrderReq.source = "api";
             // -------------------------------------------------------
 
-            long orderId = apiNewClient.createOrder(createOrderReq);
+            long orderId = apiNewClient.createOrder(createOrderReq,dimension);
             logger.info("创建buyer订单话费时间:" + (System.currentTimeMillis() - beginTime) + " ms");
             String state = "";
             boolean canTrade = true;
 
-            canTrade = priceMemery.cash.compareTo(new BigDecimal(createOrderReq.amount)) > 0;
+            canTrade = cash.compareTo(new BigDecimal(createOrderReq.amount)) > 0;
 
             if (!canTrade) {
-                logger.info("钱不够,请等待 cash:" + priceMemery.cash);
+                logger.info("钱不够,请等待 cash:" + cash);
                 price_order.remove(price);
                 return;
             }
 
-            if (priceUtil.isSatisfyTrading(PriceMemery.priceNow, price) && !priceUtil.isOverRishPriceOrLowPrice(
+            if (isSatisfyTrading(priceNow, price) && !isOverRishPriceOrLowPrice(
                 price)) {
                 beginTime = System.currentTimeMillis();
-                apiNewClient.executeOrder(orderId);
+                apiNewClient.executeOrder(orderId,dimension);
                 logger.info("执行订单花费时间:" + (System.currentTimeMillis() - beginTime) + " ms");
-                priceMemery.cash = priceMemery.cash.subtract(new BigDecimal(createOrderReq.amount));
+                cash = cash.subtract(new BigDecimal(createOrderReq.amount));
             } else {
                 orderId = 0L;
             }
 
             if (orderId == 0L) {
-                logger.info("价格变动过快 期待价格:" + price + " 实际当前市价:" + PriceMemery.priceNow);
+                logger.info("价格变动过快 期待价格:" + price + " 实际当前市价:" + priceNow);
                 price_order.remove(price);
                 return;
             }
@@ -387,15 +396,15 @@ public class PriceStrategy implements NetTradeService {
             logger.info("进入售卖流程: 价格:" + priceStep + " amount:" + fillAmount);
 
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
-            createOrderReq.accountId = String.valueOf(accountId);
+            createOrderReq.accountId = String.valueOf(dimension.getAccountId());
             createOrderReq.amount = fillAmount;
             createOrderReq.price = Double.valueOf((double)priceStep / 10000.0).toString();
-            createOrderReq.symbol = "htusdt";
+            createOrderReq.symbol = dimension.getTradeSemaphore();//"htusdt";
             createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
             createOrderReq.source = "api";
 
-            long orderId = apiNewClient.createOrder(createOrderReq);
-            apiNewClient.executeOrder(orderId);
+            long orderId = apiNewClient.createOrder(createOrderReq,dimension);
+            apiNewClient.executeOrder(orderId,dimension);
             sell_order.add(priceStep);
             //report.setFundReportUnit(buyerFundDomain,orderId);
             sellOrder.put(orderId, priceStep);
@@ -416,7 +425,7 @@ public class PriceStrategy implements NetTradeService {
         /**
          * check accountId
          */
-        if (accountId == 0) {
+        if (StringUtils.isEmpty(dimension.getAccountId()) ) {
             throw new RuntimeException("accountId 为空");
         }
         startTradePrice();
@@ -427,9 +436,7 @@ public class PriceStrategy implements NetTradeService {
      */
     @Override
     public void init() {
-        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-        Accounts account = accounts.getData().get(0);
-        accountId = account.getId();
+
         currentDate = getChinaTime();
     }
 
@@ -455,4 +462,56 @@ public class PriceStrategy implements NetTradeService {
 
     }
 
+    /**
+     * 判断当前的价格是否超过预定阈值 或者低于预定阈值
+     * 新版 直接停止掉交易
+     */
+    private  boolean isOverRishPriceOrLowPrice(int priceNow){
+        if(priceNow<dimension.getStrategyStatus().getHighriskPrice()&& priceNow>dimension.getStrategyStatus().getLowRisiPrice()){
+            return false;
+        }else {
+            dimension.getDiamond().canRunning=false;
+            return true;
+        }
+    }
+
+
+    /**
+     * 判断当前价格是否 满足交易策略
+     *
+     * @param currentPrice  当前价格
+     * @return
+     */
+    public  boolean isSatisfyTrading (int currentPrice, int zhengdianPrice) {
+        int result = currentPrice-zhengdianPrice;
+        int diff = dimension.getStrategyStatus().getDiffPrice();
+        if(currentPrice==0){
+            return false;
+        }
+
+        if(dimension.getDiamond().floatStrategy.equals(FloatEnu.ALL_FLOAT)){
+            if(result<=0 && result>= (-1*diff)){
+                return true;
+            }
+            if(result>=0 && result<=diff){
+                return true;
+            }
+        }
+
+        if(dimension.getDiamond().floatStrategy.equals(FloatEnu.DOWN_FLOAT)){
+            if(result<=0 && result>= (-1*diff)){
+                return true;
+            }
+        }
+        if(dimension.getDiamond().floatStrategy.equals(FloatEnu.UP_FLOAT)){
+
+            if(result>=0 && result<=diff){
+                return true;
+            }
+        }
+
+
+
+        return false;
+    }
 }
