@@ -96,4 +96,19 @@ public class TradeDimension {
     public void setCurrency(String currency) {
         this.currency = currency;
     }
+
+    @Override
+    public String toString() {
+        return "TradeDimension{" +
+            "apiKey='" + apiKey + '\'' +
+            ", securityKey='" + securityKey + '\'' +
+            ", tradeSemaphore='" + tradeSemaphore + '\'' +
+            ", tradeModelType=" + tradeModelType +
+            ", diamond=" + diamond +
+            ", strategyStatus=" + strategyStatus +
+            ", accountId='" + accountId + '\'' +
+            ", currency='" + currency + '\'' +
+            ", priceStrategy=" + priceStrategy +
+            '}';
+    }
 }
