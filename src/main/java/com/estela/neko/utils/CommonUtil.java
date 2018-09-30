@@ -135,7 +135,7 @@ public class CommonUtil {
 
         try {
             if(StringUtils.isEmpty(dimension.getAccountId())){
-                  apiNewClient.getAccounts(dimension);
+                dimension.setAccountId(apiNewClient.getAccounts(dimension));
             }
             accountAmountList = apiNewClient.getAccountAmount(Integer.parseInt(dimension.getAccountId()),dimension.getCurrency(),dimension);
         } catch (Exception e) {
