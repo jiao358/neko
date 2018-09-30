@@ -22,6 +22,7 @@ var currency;
                 if (text.success) {
                     const model = text.model;
                     currency =model.symbol;
+                    //alert(currency);
                     $('#curr').html(model.symbol);
                     $("input[name='symbol']").val(currency);
                     $('#running').val(model.running);
@@ -58,9 +59,10 @@ var currency;
 
     function startSystem() {
         $.ajax({
-            url: "/tradeService/startSystem?symbol="+currency,
+            url: "/tradeService/startSystem",
             data: {
-                username: "xxx"
+                username: "xxx",
+                "symbol":currency
             },
             type: "get",
             dataType: "json",
@@ -80,9 +82,10 @@ var currency;
 
     function stopSystem() {
         $.ajax({
-            url: "/tradeService/stopSystem?symbol="+currency,
+            url: "/tradeService/stopSystem",
             data: {
-                username: "xxx"
+                username: "xxx",
+                "symbol":currency
             },
             type: "get",
             dataType: "json",
