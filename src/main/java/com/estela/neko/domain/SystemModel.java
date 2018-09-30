@@ -35,7 +35,7 @@ public class SystemModel {
     /**
      * 浮动交易点数
      */
-    private Integer fluctuation = 100;
+    private Integer fluctuation = 150;
 
     /**
      * 点差计算取舍逻辑

@@ -54,7 +54,7 @@ public class StrategyStatus {
     /**
      * 浮动交易点数
      */
-    private Integer fluctuation = 100;
+    private Integer fluctuation = 150;
 
     /**
      * 起始执行价格  会以这个价格为基础 向上 或者向下增加 浮动交易点数策略

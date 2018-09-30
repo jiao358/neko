@@ -90,12 +90,14 @@ public class PriceStrategy implements NetTradeService {
     public int sellLogTime = 0;
     public volatile   int lastPrice= 0;
 
+    private int priceBase=-1;
+
     Map<Integer, AtomicInteger> samePrice = new HashMap<>();
 
     public void addSellOrder(String price, String order) {
         sellOrder.put(Long.valueOf(price), Integer.valueOf(order));
         sell_order.add(Integer.parseInt(order));
-        price_order.add(Integer.parseInt(order) - 100);
+        price_order.add(Integer.parseInt(order) - dimension.getStrategyStatus().getFluctuation());
     }
 
     public void addBuyOrder(String orderId, String price) {
@@ -105,7 +107,7 @@ public class PriceStrategy implements NetTradeService {
 
     public void deleteSellOrder(String order, String price) {
         sell_order.remove(price);
-        price_order.remove(Integer.parseInt(price) - 100);
+        price_order.remove(Integer.parseInt(price) - dimension.getStrategyStatus().getFluctuation());
         sellOrder.remove(Long.valueOf(order));
     }
 
@@ -252,7 +254,7 @@ public class PriceStrategy implements NetTradeService {
                 });
 
                 sell_order.remove(price);
-                price_order.remove(price - 100);
+                price_order.remove(price - dimension.getStrategyStatus().getFluctuation());
                 sellOrder.remove(orderId);
 
                 executor.execute(() -> {
@@ -269,10 +271,32 @@ public class PriceStrategy implements NetTradeService {
 
     public void checkBuyMarket() {
         logTime++;
+
         int currentAppPrice = priceNow;
-        int step = dimension.getStrategyStatus().getFluctuation();
+        //dimension.getStrategyStatus().getFluctuation();
+        int step = 10;
+        //当前price 为去除小数的价格
         int price = currentAppPrice / step * step;
-        boolean access = currentAppPrice == price;
+        int flu =dimension.getStrategyStatus().getFluctuation();
+
+        boolean access = (currentAppPrice == price ) &&(price%50==0) ;
+        if(sell_order.isEmpty()&& priceBase==-1){
+            //第一种情况 无售卖订单,重新开始系统启动
+            if(access){
+                priceBase=currentAppPrice%flu;
+            }
+
+        }else if(!sell_order.isEmpty() && priceBase==-1){
+            //有留存空单 重新开始启动系统
+
+
+            for(Integer ode:sell_order){
+                priceBase = ode%flu;
+                break;
+            }
+        }
+
+
         if (logTime > 120) {
             logger.warn("当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
             logTime = 0;
@@ -294,8 +318,8 @@ public class PriceStrategy implements NetTradeService {
             }
 
         }
-        if (access && price != 0) {
-            if (!sell_order.contains(price + step) && !price_order.contains(price)) {
+        if (access&& (currentAppPrice%flu)==priceBase&&price!=0) {
+            if (!sell_order.contains(price + dimension.getStrategyStatus().getFluctuation()) && !price_order.contains(price)) {
                 logger.warn("满足准入条件:" + (!isOverHandLimit() && dimension.getDiamond().canRunning));
 
                 if (!isOverHandLimit() && dimension.getDiamond().canRunning) {
