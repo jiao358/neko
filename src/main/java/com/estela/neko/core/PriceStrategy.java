@@ -12,6 +12,7 @@ import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
 import com.estela.neko.utils.CommonUtil;
+import com.estela.neko.utils.LoggerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -407,6 +408,8 @@ public class PriceStrategy implements NetTradeService {
             apiNewClient.executeOrder(orderId,dimension);
             sell_order.add(priceStep);
             //report.setFundReportUnit(buyerFundDomain,orderId);
+            //增加每次新增空单 都需要有相应的日志变化
+            LoggerUtil.loggerSellInfo(dimension.getTradeSemaphore(),sellOrder);
             sellOrder.put(orderId, priceStep);
 
         } catch (Exception e) {
