@@ -25,7 +25,7 @@ import java.util.Properties;
 public class LoadApiKey implements InitializingBean{
     private  static Logger logger = LoggerFactory.getLogger(LoadApiKey.class);
     final String apiKeyFile ="/root/apikey.properties";
-    final String dimensionDic = "/root/basaka";
+    final String dimensionDic = "/Users/estelasu/basaka";
     @Autowired
     TradeModelFactory tradeModelFactory;
     @Autowired

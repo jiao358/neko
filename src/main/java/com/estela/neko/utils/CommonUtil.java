@@ -48,7 +48,7 @@ public class CommonUtil {
 
         if(time==null || !initSuccess){
             time = dimension.getPriceStrategy().getChinaTime();
-            init(dimension);
+            //init(dimension);
         }
 
 
@@ -87,7 +87,7 @@ public class CommonUtil {
             time = priceStrategy.getChinaTime();
 
         }*/
-        init(dimension);
+        //init(dimension);
         setAmountModel(systemModel,dimension);
 
         //当前HT余额以及冻结
