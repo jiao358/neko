@@ -308,7 +308,7 @@ public class PriceStrategy implements NetTradeService {
         }
         if (access&& price!=0) {
             if (!sell_order.contains(price + dimension.getStrategyStatus().getFluctuation()) && !price_order.contains(price)) {
-                logger.warn("满足准入条件:" + (!isOverHandLimit() && dimension.getDiamond().canRunning));
+                //logger.warn("满足准入条件:" + (!isOverHandLimit() && dimension.getDiamond().canRunning));
 
                 if (!isOverHandLimit() && dimension.getDiamond().canRunning) {
                     buyMarket(price);

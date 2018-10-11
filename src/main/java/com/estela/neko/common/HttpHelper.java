@@ -65,8 +65,7 @@ public class HttpHelper {
                 .getBigDecimal("price");
 
             //5位数
-
-            proPrice = proPrice.multiply(rule);
+            proPrice= multiplyPrice(proPrice);
 
         } catch (Exception e) {
             logger.error(symbol+" 货币查询最新价格失败", e);
