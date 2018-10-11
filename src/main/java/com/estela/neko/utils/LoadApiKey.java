@@ -25,6 +25,7 @@ import java.util.Properties;
 public class LoadApiKey implements InitializingBean{
     private  static Logger logger = LoggerFactory.getLogger(LoadApiKey.class);
     final String apiKeyFile ="/root/apikey.properties";
+    //final String dimensionDic = "/Users/estelasu/basaka";
     final String dimensionDic = "/root/basaka";
     @Autowired
     TradeModelFactory tradeModelFactory;
@@ -38,6 +39,17 @@ public class LoadApiKey implements InitializingBean{
     @Autowired
     CommonUtil commonUtil;
 
+    private  void changeFlu(TradeDimension dimension){
+        TradeModelType type =dimension.getTradeModelType();
+        if(type.equals(TradeModelType.QUA_MODEL)){
+            dimension.setFluFromDimension(150);
+        }else if(type.equals(TradeModelType.QUA_MODEL100)){
+            dimension.setFluFromDimension(100);
+        }else if(type.equals(TradeModelType.QUA_MODEL200)){
+            dimension.setFluFromDimension(200);
+
+        }
+    }
     @Override
     public void afterPropertiesSet() throws Exception {
     try{
@@ -66,6 +78,9 @@ public class LoadApiKey implements InitializingBean{
                 dimension.setTradeSemaphore(semaphore);
                 dimension.setCurrency(currency);
                 dimension.setTradeModelType(TradeModelType.valueOf(model));
+                changeFlu(dimension);
+
+
                 PriceStrategy priceStrategy = new PriceStrategy(dimension);
                 priceStrategy.setApiNewClient(apiNewClient,httpHelper,commonUtil);
                 dimension.setPriceStrategy(priceStrategy);
@@ -81,4 +96,5 @@ public class LoadApiKey implements InitializingBean{
     }catch (Exception e){}
 
     }
+
 }

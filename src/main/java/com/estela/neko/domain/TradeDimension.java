@@ -44,6 +44,10 @@ public class TradeDimension {
         return strategyStatus;
     }
 
+    public void setFluFromDimension(int flu){
+        strategyStatus.setFluctuation(flu);
+    }
+
     public Diamond getDiamond() {
         return diamond;
     }
