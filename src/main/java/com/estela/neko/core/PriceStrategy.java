@@ -1,6 +1,7 @@
 package com.estela.neko.core;
 
 import com.estela.neko.Enutype.FloatEnu;
+import com.estela.neko.Enutype.TradeModelType;
 import com.estela.neko.api.NetTradeService;
 import com.estela.neko.common.FundDomain;
 import com.estela.neko.common.HttpHelper;
@@ -277,24 +278,11 @@ public class PriceStrategy implements NetTradeService {
         int step = 10;
         //当前price 为去除小数的价格
         int price = currentAppPrice / step * step;
-        int flu =dimension.getStrategyStatus().getFluctuation();
-
-        boolean access = (currentAppPrice == price ) &&(price%50==0) ;
-        if(sell_order.isEmpty()&& priceBase==-1){
-            //第一种情况 无售卖订单,重新开始系统启动
-            if(access){
-                priceBase=currentAppPrice%flu;
-            }
-
-        }else if(!sell_order.isEmpty() && priceBase==-1){
-            //有留存空单 重新开始启动系统
 
 
-            for(Integer ode:sell_order){
-                priceBase = ode%flu;
-                break;
-            }
-        }
+        boolean access = canBuy(dimension.getTradeModelType(),priceNow);
+
+
 
 
         if (logTime > 120) {
@@ -318,7 +306,7 @@ public class PriceStrategy implements NetTradeService {
             }
 
         }
-        if (access&& (currentAppPrice%flu)==priceBase&&price!=0) {
+        if (access&& price!=0) {
             if (!sell_order.contains(price + dimension.getStrategyStatus().getFluctuation()) && !price_order.contains(price)) {
                 logger.warn("满足准入条件:" + (!isOverHandLimit() && dimension.getDiamond().canRunning));
 
@@ -546,5 +534,59 @@ public class PriceStrategy implements NetTradeService {
 
 
         return false;
+    }
+
+
+    public  boolean canBuy(TradeModelType type, int priceNow) {
+        boolean access = false;
+        //100的基数
+        if (type.equals(TradeModelType.QUA_MODEL100)) {
+            int currentAppPrice = priceNow;
+            int step = 100;
+            int price = currentAppPrice / step * step;
+            access = currentAppPrice == price;
+        }else if(type.equals(TradeModelType.QUA_MODEL)){
+            //150基数
+            int currentAppPrice = priceNow;
+            //dimension.getStrategyStatus().getFluctuation();
+            int step = 10;
+            //当前price 为去除小数的价格
+            int price = currentAppPrice / step * step;
+            int flu =dimension.getStrategyStatus().getFluctuation();
+            access = (currentAppPrice == price ) &&(price%50==0) ;
+            if(sell_order.isEmpty()&& priceBase==-1){
+                //第一种情况 无售卖订单,重新开始系统启动
+                if(access){
+                    priceBase=currentAppPrice%flu;
+                }
+
+            }else if(!sell_order.isEmpty() && priceBase==-1){
+                //有留存空单 重新开始启动系统
+                for(Integer ode:sell_order){
+                    priceBase = ode%flu;
+                    break;
+                }
+            }
+             access = (currentAppPrice%flu)==priceBase&&access;
+        }else if(type.equals(TradeModelType.QUA_MODEL200)){
+            int currentAppPrice = priceNow;
+            int step = 100;
+            int price = currentAppPrice / step * step;
+            access = currentAppPrice == price;
+            if(access){
+                //为100的整数, 那么第二步判别 是否为200的运动幅度
+                if(!sell_order.isEmpty()){
+                    for(int sellPrice:sell_order){
+                        access = (sellPrice-currentAppPrice)%200==0;
+                        break;
+                    }
+                }
+
+            }
+
+        }
+
+        return access;
+
     }
 }

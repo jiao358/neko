@@ -46,8 +46,9 @@ var currency;
                     $('#usdtFrozen').val(model.usdtFrozen);
                     $('#htNow').val(model.htNow);
                     $('#htFrozen').val(model.htFrozen);
-
                     $('#ghost').val(model.ghost);
+                    const str = text.symbol;
+                    $("b[name='curr']").html(str.replace("usdt",""));
 
 
                 }
@@ -217,9 +218,9 @@ var currency;
             <td><input type="text" id="usdtFrozen" readonly="true"/></td>
 
 
-            <td>HT余额:</td>
+            <td><b name="curr"></b>余额:</td>
             <td><input type="text" id="htNow" readonly="true"/></td>
-            <td>HT冻结:</td>
+            <td><b name="curr"></b>冻结:</td>
             <td><input type="text" id="htFrozen" readonly="true"/></td>
 
 

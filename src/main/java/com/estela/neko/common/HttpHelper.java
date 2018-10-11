@@ -64,6 +64,8 @@ public class HttpHelper {
             proPrice = parseObject.getJSONObject("tick").getJSONArray("data").getJSONObject(0)
                 .getBigDecimal("price");
 
+            //5位数
+
             proPrice = proPrice.multiply(rule);
 
         } catch (Exception e) {
@@ -72,6 +74,16 @@ public class HttpHelper {
 
         return proPrice;
     }
+
+    private BigDecimal multiplyPrice(BigDecimal price){
+        BigDecimal temp= price.multiply(rule);
+        int length=temp.toString().length();
+        if(length>5){
+            temp = new BigDecimal(temp.toString().substring(0,5));
+        }
+        return temp;
+    }
+
 
     public String get(String urlNameString,String symbol) throws Exception {
 
