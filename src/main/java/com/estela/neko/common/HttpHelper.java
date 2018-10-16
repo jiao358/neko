@@ -63,7 +63,9 @@ public class HttpHelper {
             JSONObject parseObject = JSON.parseObject(sendGet);
             proPrice = parseObject.getJSONObject("tick").getJSONArray("data").getJSONObject(0)
                 .getBigDecimal("price");
-
+            //设置当前货币小数点位数
+            int place= getPlace(proPrice);
+            factory.getDimension(symbol).setLittlePrice(place);
             //5位数
             proPrice= multiplyPrice(proPrice);
 
@@ -72,6 +74,12 @@ public class HttpHelper {
         }
 
         return proPrice;
+    }
+
+    private int getPlace(BigDecimal price){
+        String str = price.toString();
+        return str.indexOf(".");
+
     }
 
     private BigDecimal multiplyPrice(BigDecimal price){

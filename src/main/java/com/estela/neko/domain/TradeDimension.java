@@ -27,6 +27,9 @@ public class TradeDimension {
 
     private String currency;
 
+    //小数点数
+    private int littlePrice;
+
 
 
 
@@ -38,6 +41,14 @@ public class TradeDimension {
 
     public PriceStrategy getPriceStrategy() {
         return priceStrategy;
+    }
+
+    public int getLittlePrice() {
+        return littlePrice;
+    }
+
+    public void setLittlePrice(int littlePrice) {
+        this.littlePrice = littlePrice;
     }
 
     public StrategyStatus getStrategyStatus() {

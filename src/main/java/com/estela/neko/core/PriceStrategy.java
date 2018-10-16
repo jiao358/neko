@@ -7,16 +7,12 @@ import com.estela.neko.common.FundDomain;
 import com.estela.neko.common.HttpHelper;
 import com.estela.neko.domain.SystemModel;
 import com.estela.neko.domain.TradeDimension;
-import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.api.ApiNewClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
-import com.estela.neko.huobi.response.Accounts;
-import com.estela.neko.huobi.response.AccountsResponse;
 import com.estela.neko.utils.CommonUtil;
 import com.estela.neko.utils.LoggerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.util.MapUtils;
 import org.thymeleaf.util.StringUtils;
 
@@ -47,7 +43,7 @@ public class PriceStrategy implements NetTradeService {
     public volatile  int priceNow;
 
     public volatile  BigDecimal cash ;
-
+    BigDecimal rule =new BigDecimal("10");
 
     public void setApiNewClient(ApiNewClient apiNewClient,HttpHelper httpHelper,CommonUtil commonUtil){
         this.apiNewClient = apiNewClient;
@@ -359,7 +355,7 @@ public class PriceStrategy implements NetTradeService {
             long beginTime = System.currentTimeMillis();
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
             createOrderReq.accountId = String.valueOf(dimension.getAccountId());
-            createOrderReq.amount = Double.toString(dimension.getStrategyStatus().getLotSize() * (double)price / 10000);
+            createOrderReq.amount = Double.toString(dimension.getStrategyStatus().getLotSize() * (double)price / fluPlace());
 
             createOrderReq.symbol = dimension.getTradeSemaphore();//"htusdt";
             createOrderReq.type = CreateOrderRequest.OrderType.BUY_MARKET;
@@ -403,6 +399,17 @@ public class PriceStrategy implements NetTradeService {
 
     }
 
+    private double fluPlace(){
+        int place = dimension.getLittlePrice();
+        double cashPlace=10000.0;
+        if(place!=-1){
+            cashPlace=   rule.pow(5-place).doubleValue();
+        }else{
+            cashPlace = rule.pow(0).doubleValue();
+        }
+        return cashPlace;
+    }
+
     //todo 需要重试机制
     public void sell(int priceStep, String fillAmount, FundDomain buyerFundDomain) {
 
@@ -414,10 +421,12 @@ public class PriceStrategy implements NetTradeService {
 
             logger.info("进入售卖流程: 价格:" + priceStep + " amount:" + fillAmount);
 
+
+
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
             createOrderReq.accountId = String.valueOf(dimension.getAccountId());
             createOrderReq.amount = fillAmount;
-            createOrderReq.price = Double.valueOf((double)priceStep / 10000.0).toString();
+            createOrderReq.price = Double.valueOf((double)priceStep / fluPlace()).toString();
             createOrderReq.symbol = dimension.getTradeSemaphore();//"htusdt";
             createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
             createOrderReq.source = "api";

@@ -2,6 +2,8 @@ package com.estela.neko.login;
 
 import com.alibaba.fastjson.JSONObject;
 import com.estela.neko.common.AccountModel;
+import com.estela.neko.core.TradeModelFactory;
+import com.estela.neko.domain.TradeDimension;
 import com.estela.neko.huobi.api.ApiClient;
 import com.estela.neko.huobi.response.Accounts;
 import com.estela.neko.huobi.response.AccountsResponse;
@@ -11,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
@@ -29,6 +32,9 @@ public class UserHelper {
 
     @Autowired
     AccountModel accountModel;
+
+    @Autowired
+    TradeModelFactory factory;
 
     public static String symbol ="htusdt";
 
@@ -72,14 +78,6 @@ public class UserHelper {
     public String systemStatus(){
 
         return "SystemStatus";
-    }
-    @RequestMapping("/account")
-    public Object queryAccount(){
-        //GET /v1/account/accounts/{account-id}/balance
-        accountModel.setKey("a7fd725a-502746cd-69b903fd-4418a", "5774a589-a4b36db6-382fdc6f-6bbae");
-        AccountsResponse<List<Accounts>> accounts = apiClient.accounts();
-        int account = accounts.getData().get(0).getId();
-        return JSONObject.toJSON(apiClient.getBalance(account+""));
     }
 
 
