@@ -140,6 +140,7 @@ public class PriceStrategy implements NetTradeService {
             checkBuyMarket();
         }, 100, 40, TimeUnit.MILLISECONDS);
 
+        int priceLimit = dimension.getStrategyStatus().getFluctuation()*3;
         sellScheduleOrder.scheduleAtFixedRate(() -> {
                 sellLogTime++;
 
