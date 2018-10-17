@@ -30,10 +30,18 @@ public class TradeDimension {
     //小数点数
     private int littlePrice;
 
-
+    private boolean ghostFlag=false;
 
 
     private PriceStrategy priceStrategy;
+
+    public void setGhostFlag(boolean ghostFlag) {
+        this.ghostFlag = ghostFlag;
+    }
+
+    public boolean isGhostFlag() {
+        return ghostFlag;
+    }
 
     public void setPriceStrategy(PriceStrategy priceStrategy){
         this.priceStrategy = priceStrategy;

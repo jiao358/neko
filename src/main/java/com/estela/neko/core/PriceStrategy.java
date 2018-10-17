@@ -123,6 +123,10 @@ public class PriceStrategy implements NetTradeService {
 
         scheduleReflash.scheduleWithFixedDelay(() -> {
             try {
+                if(dimension.isGhostFlag()){
+                    logger.info(dimension.getTradeSemaphore()+" ghostFlag gogogo!");
+                }
+
                 BigDecimal currentPrice = httpHelper.getPrice(dimension.getApiKey(),dimension.getTradeSemaphore());
                 if (currentPrice == null) {
                     return;
@@ -283,7 +287,7 @@ public class PriceStrategy implements NetTradeService {
 
 
         if (logTime > 120) {
-            logger.warn("当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
+            logger.warn(dimension.getTradeSemaphore()+" 当前价格:" + currentAppPrice + ",等比价格:" + price + "是否满足准入条件:" + access);
             logTime = 0;
             if(lastPrice!=currentAppPrice){
                 lastPrice = currentAppPrice;
