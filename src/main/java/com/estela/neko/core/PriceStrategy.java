@@ -431,7 +431,7 @@ public class PriceStrategy implements NetTradeService {
             CreateOrderRequest createOrderReq = new CreateOrderRequest();
             createOrderReq.accountId = String.valueOf(dimension.getAccountId());
             createOrderReq.amount = fillAmount;
-            createOrderReq.price = Double.valueOf((double)priceStep / fluPlace()).toString();
+            createOrderReq.price = Double.valueOf(((double)priceStep-2 )/ fluPlace()).toString();
             createOrderReq.symbol = dimension.getTradeSemaphore();//"htusdt";
             createOrderReq.type = CreateOrderRequest.OrderType.SELL_LIMIT;
             createOrderReq.source = "api";
@@ -598,6 +598,21 @@ public class PriceStrategy implements NetTradeService {
 
             }
 
+        }else if(type.equals(TradeModelType.QUA_MODEL300)){
+            int currentAppPrice = priceNow;
+            int step = 100;
+            int price = currentAppPrice / step * step;
+            access = currentAppPrice == price;
+            if(access){
+                //为100的整数, 那么第二步判别 是否为300的运动幅度
+                if(!sell_order.isEmpty()){
+                    for(int sellPrice:sell_order){
+                        access = (sellPrice-currentAppPrice)%300==0;
+                        break;
+                    }
+                }
+
+            }
         }
 
         return access;
