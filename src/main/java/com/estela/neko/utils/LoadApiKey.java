@@ -47,7 +47,8 @@ public class LoadApiKey implements InitializingBean{
             dimension.setFluFromDimension(100);
         }else if(type.equals(TradeModelType.QUA_MODEL200)){
             dimension.setFluFromDimension(200);
-
+        }else if(type.equals(TradeModelType.QUA_MODEL300)){
+            dimension.setFluFromDimension(300);
         }
     }
     @Override
