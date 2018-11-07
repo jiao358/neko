@@ -11,6 +11,7 @@ import com.estela.neko.huobi.api.ApiNewClient;
 import com.estela.neko.huobi.request.CreateOrderRequest;
 import com.estela.neko.utils.CommonUtil;
 import com.estela.neko.utils.LoggerUtil;
+import com.estela.neko.utils.SendQQMailUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.MapUtils;
@@ -38,17 +39,23 @@ public class PriceStrategy implements NetTradeService {
 
     CommonUtil commonUtil;
 
+    SendQQMailUtil sendQQMailUtil;
+
+
     private volatile String currentDate;
 
     public volatile  int priceNow;
 
+
+
     public volatile  BigDecimal cash ;
     BigDecimal rule =new BigDecimal("10");
 
-    public void setApiNewClient(ApiNewClient apiNewClient,HttpHelper httpHelper,CommonUtil commonUtil){
+    public void setApiNewClient(ApiNewClient apiNewClient,HttpHelper httpHelper,CommonUtil commonUtil,SendQQMailUtil sendQQMailUtil){
         this.apiNewClient = apiNewClient;
         this.httpHelper = httpHelper;
         this.commonUtil = commonUtil;
+        this.sendQQMailUtil= sendQQMailUtil;
     }
 
     public PriceStrategy(TradeDimension dimension){
@@ -506,6 +513,10 @@ public class PriceStrategy implements NetTradeService {
             return false;
         }else {
             dimension.getDiamond().canRunning=false;
+            //进行邮件报警
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String ss =simpleDateFormat.format(new Date());
+            sendQQMailUtil.send("当前货币"+dimension.getTradeSemaphore()+"价格范围异常,当前价格:"+priceNow+" 发生时间:"+ss);
             return true;
         }
     }

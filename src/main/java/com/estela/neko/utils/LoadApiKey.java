@@ -39,6 +39,8 @@ public class LoadApiKey implements InitializingBean{
     @Autowired
     CommonUtil commonUtil;
 
+    @Autowired
+    SendQQMailUtil sendQQMailUtil;
     private  void changeFlu(TradeDimension dimension){
         TradeModelType type =dimension.getTradeModelType();
         if(type.equals(TradeModelType.QUA_MODEL)){
@@ -83,7 +85,7 @@ public class LoadApiKey implements InitializingBean{
 
 
                 PriceStrategy priceStrategy = new PriceStrategy(dimension);
-                priceStrategy.setApiNewClient(apiNewClient,httpHelper,commonUtil);
+                priceStrategy.setApiNewClient(apiNewClient,httpHelper,commonUtil,sendQQMailUtil);
                 dimension.setPriceStrategy(priceStrategy);
                 tradeModelFactory.addDimention(dimension);
             }catch (Exception e){
